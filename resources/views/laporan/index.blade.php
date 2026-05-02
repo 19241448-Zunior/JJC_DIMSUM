@@ -119,6 +119,21 @@
     </div>
 
     <style>
+        :root {
+            --primary-red: #c62833;
+            --red-light: #cf202c;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.2);
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .print-only-header {
             display: none;
         }
@@ -126,166 +141,206 @@
         .laporan-insights {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 0.95rem;
+            gap: 1.2rem;
+            margin-bottom: 1.6rem;
         }
 
         .laporan-insight {
-            background: linear-gradient(180deg, #fff 0%, #fff8f8 100%);
-            border: 1px solid #f3cfd3;
-            border-radius: 0.8rem;
-            padding: 0.7rem 0.85rem;
-            box-shadow: 0 10px 20px rgba(185, 23, 32, 0.08);
+            background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+            border: 1px solid rgba(198, 40, 51, 0.08);
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: slideInDown 0.6s ease forwards;
+        }
+
+        .laporan-insight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #cf202c 0%, #c62833 100%);
+        }
+
+        .laporan-insight:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
         }
 
         .laporan-insight__label {
-            font-size: 0.74rem;
+            font-size: 0.8rem;
             color: #9f1d28;
-            font-weight: 700;
+            font-weight: 850;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.2rem;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.4rem;
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.5rem;
         }
 
         .laporan-insight__value {
-            color: #7f1d1d;
-            font-size: 1.05rem;
-            font-weight: 800;
+            color: #2d2d2d;
+            font-size: 1.4rem;
+            font-weight: 950;
             line-height: 1.2;
         }
 
         .laporan-filter {
-            border: 1px solid #f1d1d4;
-            background: linear-gradient(180deg, #fff 0%, #fffafa 100%);
-            border-radius: 0.75rem;
-            padding: 0.75rem;
+            border: 1px solid rgba(198, 40, 51, 0.1);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 248, 248, 0.98) 100%);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .laporan-filter .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #2d2d2d;
+            margin-bottom: 0.5rem;
+        }
+
+        .laporan-filter .form-control,
+        .laporan-filter .form-select {
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            border-radius: 0.6rem;
+            padding: 0.6rem 0.8rem;
+            transition: var(--transition);
+        }
+
+        .laporan-filter .form-control:focus,
+        .laporan-filter .form-select:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(198, 40, 51, 0.1);
         }
 
         .laporan-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.95rem;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
         }
 
         .laporan-chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.38rem;
-            border: 1px solid #f6c8cc;
-            background: linear-gradient(180deg, #fffafa 0%, #fff3f4 100%);
+            gap: 0.5rem;
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 248, 0.95) 100%);
             color: #8f1b24;
             border-radius: 999px;
-            padding: 0.36rem 0.7rem;
-            font-size: 0.82rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .laporan-chip:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .laporan-table {
-            border-radius: 0.82rem;
+            border-radius: 1.2rem;
             overflow: hidden;
-            border: 1px solid #f1d1d4;
-            box-shadow: 0 12px 26px rgba(198, 40, 51, 0.1);
+            border: none;
+            box-shadow: var(--shadow-lg);
         }
 
         .laporan-table .table thead th {
-            background: linear-gradient(90deg, #cf202c 0%, #b91720 100%);
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 100%);
             color: #fff;
             border: none;
-            position: sticky;
-            top: 0;
-            z-index: 1;
+            font-weight: 850;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 0.8rem;
         }
 
         .laporan-table .table tbody tr {
-            transition: transform 0.14s ease, background-color 0.14s ease;
+            transition: var(--transition);
+            border-bottom: 1px solid rgba(198, 40, 51, 0.06);
         }
 
         .laporan-table .table tbody tr:hover {
-            background-color: #fff6f6;
-            transform: translateX(2px);
+            background: linear-gradient(90deg, rgba(206, 32, 44, 0.04) 0%, rgba(206, 32, 44, 0.02) 100%);
+            transform: translateX(3px);
         }
 
         .laporan-no {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 1.8rem;
-            height: 1.8rem;
+            min-width: 2rem;
+            height: 2rem;
             border-radius: 999px;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            color: #9f1239;
-            font-weight: 700;
-            font-size: 0.78rem;
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 100%);
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            box-shadow: var(--shadow-sm);
         }
 
         .laporan-badge {
             color: #fff;
             border: 1px solid transparent;
-            box-shadow: 0 4px 10px rgba(17, 24, 39, 0.16);
+            box-shadow: var(--shadow-md);
+            font-weight: 700;
+            padding: 0.4rem 0.8rem;
         }
 
         .laporan-badge--muted {
-            background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
-            border-color: rgba(75, 85, 99, 0.45);
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            border-color: rgba(75, 85, 99, 0.6);
         }
 
         .laporan-badge--masuk {
-            background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
-            border-color: rgba(21, 128, 61, 0.45);
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            border-color: rgba(21, 128, 61, 0.6);
         }
 
         .laporan-badge--keluar {
-            background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-            border-color: rgba(217, 119, 6, 0.45);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-color: rgba(217, 119, 6, 0.6);
         }
 
         .laporan-badge--akhir {
-            background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
-            border-color: rgba(29, 78, 216, 0.45);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-color: rgba(29, 78, 216, 0.6);
         }
 
-        @media (max-width: 991.98px) {
+        @media (max-width: 1024px) {
             .laporan-insights {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
             .laporan-insights {
                 grid-template-columns: 1fr;
-                gap: 0.55rem;
-                margin-bottom: 0.72rem;
+                gap: 0.8rem;
             }
 
             .laporan-insight {
-                padding: 0.58rem 0.7rem;
-            }
-
-            .laporan-insight__label {
-                font-size: 0.7rem;
-            }
-
-            .laporan-insight__value {
-                font-size: 0.95rem;
-            }
-
-            .laporan-meta {
-                gap: 0.45rem;
-                margin-bottom: 0.72rem;
-            }
-
-            .laporan-chip {
-                font-size: 0.74rem;
-                padding: 0.28rem 0.55rem;
+                padding: 0.9rem;
             }
 
             .laporan-filter {
-                padding: 0.62rem;
+                padding: 0.8rem;
+            }
+
+            .laporan-table .table th,
+            .laporan-table .table td {
+                padding: 0.7rem 0.6rem;
+                font-size: 0.85rem;
             }
         }
 

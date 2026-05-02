@@ -6,115 +6,365 @@
 @section('content')
     @push('styles')
     <style>
+        :root {
+            --primary-red: #c62833;
+            --red-light: #cf202c;
+            --red-dark: #8f1b24;
+            --blue-primary: #2563eb;
+            --blue-dark: #1d4ed8;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.2);
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         .barang-insights {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 0.95rem;
+            gap: 1.4rem;
+            margin-bottom: 2rem;
         }
 
         .barang-insight {
-            background: linear-gradient(180deg, #fff 0%, #fff8f8 100%);
-            border: 1px solid #f3cfd3;
-            border-radius: 0.8rem;
-            padding: 0.7rem 0.85rem;
-            box-shadow: 0 10px 20px rgba(185, 23, 32, 0.08);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f5f5f5 100%);
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            border-radius: 1.6rem;
+            padding: 1.6rem;
+            box-shadow: 0 8px 24px rgba(198, 40, 51, 0.08);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: slideInDown 0.7s ease forwards;
+        }
+
+        .barang-insight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #cf202c 0%, #c62833 50%, #8f1b24 100%);
+            box-shadow: 0 2px 8px rgba(198, 40, 51, 0.2);
+        }
+
+        .barang-insight::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(206, 32, 44, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .barang-insight:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(198, 40, 51, 0.15);
+            border-color: rgba(198, 40, 51, 0.25);
         }
 
         .barang-insight__label {
-            font-size: 0.76rem;
-            color: #9f1d28;
-            font-weight: 700;
+            font-size: 0.75rem;
+            color: #8f1b24;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.2rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.6rem;
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.6rem;
+            text-shadow: 0 1px 2px rgba(198, 40, 51, 0.05);
+        }
+
+        .barang-insight__label i {
+            font-size: 1.1rem;
+            color: var(--primary-red);
         }
 
         .barang-insight__value {
-            color: #7f1d1d;
-            font-size: 1.1rem;
-            font-weight: 800;
-            line-height: 1.2;
+            color: #1a1a1a;
+            font-size: 2.2rem;
+            font-weight: 950;
+            line-height: 1.1;
+            letter-spacing: -0.8px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .barang-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.95rem;
+            gap: 0.9rem;
+            margin-bottom: 1.8rem;
         }
 
         .barang-chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.38rem;
-            border: 1px solid #f6c8cc;
-            background: linear-gradient(180deg, #fffafa 0%, #fff3f4 100%);
+            gap: 0.6rem;
+            border: 1.5px solid rgba(198, 40, 51, 0.15);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 248, 0.8) 100%);
             color: #8f1b24;
             border-radius: 999px;
-            padding: 0.36rem 0.7rem;
-            font-size: 0.82rem;
-            font-weight: 600;
+            padding: 0.65rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(198, 40, 51, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .barang-chip::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 100% 0%, rgba(206, 32, 44, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .barang-chip:hover {
+            background: linear-gradient(135deg, rgba(206, 32, 44, 0.12) 0%, rgba(206, 32, 44, 0.06) 100%);
+            border-color: rgba(198, 40, 51, 0.3);
+            box-shadow: 0 8px 20px rgba(198, 40, 51, 0.15);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .barang-chip i {
+            font-size: 0.9rem;
         }
 
         .barang-table {
-            border-radius: 0.82rem;
+            border-radius: 1.6rem;
             overflow: hidden;
-            border: 1px solid #f1d1d4;
-            box-shadow: 0 12px 26px rgba(198, 40, 51, 0.1);
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            box-shadow: 0 8px 24px rgba(198, 40, 51, 0.1);
+            animation: fadeIn 0.7s ease forwards;
+        }
+
+        .barang-table .table {
+            margin-bottom: 0;
         }
 
         .barang-table .table thead th {
-            background: linear-gradient(90deg, #cf202c 0%, #b91720 100%);
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 50%, #8f1b24 100%);
             color: #fff;
             border: none;
             position: sticky;
             top: 0;
-            z-index: 1;
+            z-index: 10;
+            font-weight: 900;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 1.2rem 1rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .barang-table .table tbody tr {
-            transition: transform 0.14s ease, background-color 0.14s ease;
+            transition: var(--transition);
+            border-bottom: 1px solid rgba(198, 40, 51, 0.08);
         }
 
         .barang-table .table tbody tr:hover {
-            background-color: #fff6f6;
-            transform: translateX(2px);
+            background: linear-gradient(90deg, rgba(206, 32, 44, 0.08) 0%, rgba(206, 32, 44, 0.04) 100%);
+            transform: translateX(4px);
+            box-shadow: inset 5px 0 0 0 var(--primary-red);
+        }
+
+        .barang-table .table td {
+            padding: 1.1rem 1rem;
+            vertical-align: middle;
+            font-weight: 600;
         }
 
         .barang-no {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 1.8rem;
-            height: 1.8rem;
-            border-radius: 999px;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            color: #9f1239;
-            font-weight: 700;
-            font-size: 0.78rem;
+            min-width: 2.2rem;
+            height: 2.2rem;
+            border-radius: 0.9rem;
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 100%);
+            color: #fff;
+            font-weight: 900;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 12px rgba(198, 40, 51, 0.2);
+            letter-spacing: 0.5px;
         }
 
         .barang-stok {
-            background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
             color: #fff;
-            border: 1px solid rgba(29, 78, 216, 0.45);
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+            border: 1px solid rgba(29, 78, 216, 0.3);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15) !important;
+            font-weight: 800 !important;
+            padding: 0.5rem 0.9rem !important;
+            border-radius: 0.8rem !important;
+            font-size: 0.78rem !important;
+            letter-spacing: 0.3px;
         }
 
-        @media (max-width: 767px) {
+        .actions-inline {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .actions-inline .btn {
+            padding: 0.45rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 0.7rem;
+            transition: var(--transition);
+            font-weight: 700;
+            border: none;
+        }
+
+        .actions-inline .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+
+        .actions-inline .btn-warning:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.3);
+        }
+
+        .actions-inline .btn-danger {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff;
+        }
+
+        .actions-inline .btn-danger:hover {
+            background: linear-gradient(135deg, #b91c1c, #991b1b);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(185, 28, 28, 0.3);
+        }
+
+        .card {
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            box-shadow: 0 8px 24px rgba(198, 40, 51, 0.1);
+            border-radius: 1.6rem;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f5f5f5 100%);
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 100% 0%, rgba(206, 32, 44, 0.03) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 50%, #8f1b24 100%);
+            color: #fff;
+            border: none;
+            padding: 1.6rem;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -30%;
+            width: 60%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .card-title {
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 0.8px;
+            margin: 0;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-tools {
+            display: flex;
+            gap: 0.9rem;
+        }
+
+        .card-tools .btn {
+            border-radius: 0.8rem;
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            transition: var(--transition);
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+
+        .card-tools .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            color: #fff;
+        }
+
+        .card-tools .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+        }
+
+        .card-body {
+            padding: 1.6rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .barang-insights {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
             .barang-insights {
                 grid-template-columns: 1fr;
-                gap: 0.55rem;
-                margin-bottom: 0.72rem;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
             }
 
             .barang-insight {
-                padding: 0.58rem 0.7rem;
+                padding: 1.2rem;
+                border-radius: 1.3rem;
             }
 
             .barang-insight__label {
@@ -122,26 +372,79 @@
             }
 
             .barang-insight__value {
-                font-size: 0.95rem;
+                font-size: 1.8rem;
             }
 
-            .barang-meta {
-                gap: 0.45rem;
-                margin-bottom: 0.72rem;
+            .barang-table .table {
+                font-size: 0.85rem;
             }
 
-            .barang-chip {
-                font-size: 0.74rem;
-                padding: 0.28rem 0.55rem;
+            .barang-table .table td {
+                padding: 0.9rem 0.8rem;
             }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 576px) {
+            .barang-insight {
+                border-radius: 1rem;
+            }
+
+            .barang-chip {
+                padding: 0.5rem 0.9rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+    @endpush
+                letter-spacing: 0.6px;
+            }
+
+            .barang-insight__value {
+                font-size: 1.1rem;
+            }
+
+            .barang-meta {
+                gap: 0.6rem;
+                margin-bottom: 1rem;
+            }
+
+            .barang-chip {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .card-header {
+                padding: 0.9rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .barang-table .table th,
+            .barang-table .table td {
+                padding: 0.7rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .barang-insights {
+                gap: 0.6rem;
+            }
+
+            .barang-insight {
+                padding: 0.75rem;
+            }
+
+            .barang-insight__value {
+                font-size: 0.95rem;
+            }
+
             .card-header {
                 display: flex;
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 0.45rem;
+                gap: 0.8rem;
             }
 
             .card-tools {
@@ -152,30 +455,21 @@
                 width: 100%;
             }
 
-            .barang-chip {
-                font-size: 0.7rem;
-                padding: 0.24rem 0.48rem;
-            }
-
-            .barang-table .table th,
-            .barang-table .table td {
-                white-space: nowrap;
+            .barang-no {
+                min-width: 1.6rem;
+                height: 1.6rem;
             }
 
             .actions-inline {
-                justify-content: center;
+                flex-wrap: wrap;
             }
 
             .actions-inline .btn {
+                flex: 1;
                 min-width: 2rem;
-                min-height: 2rem;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0.28rem;
             }
 
-            .actions-inline .action-label {
+            .action-label {
                 display: none;
             }
         }

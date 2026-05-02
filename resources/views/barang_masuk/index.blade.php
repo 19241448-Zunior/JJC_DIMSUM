@@ -6,146 +6,268 @@
 @section('content')
     @push('styles')
     <style>
+        :root {
+            --primary-red: #c62833;
+            --red-light: #cf202c;
+            --green-primary: #16a34a;
+            --green-dark: #15803d;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.2);
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
         .barang-masuk-insights {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 0.95rem;
+            gap: 1.4rem;
+            margin-bottom: 2rem;
         }
 
         .barang-masuk-insight {
-            background: linear-gradient(180deg, #fff 0%, #fff7f8 100%);
-            border: 1px solid #f3cfd3;
-            border-radius: 0.8rem;
-            padding: 0.7rem 0.85rem;
-            box-shadow: 0 10px 20px rgba(185, 23, 32, 0.08);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #f5f5f5 100%);
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            border-radius: 1.6rem;
+            padding: 1.6rem;
+            box-shadow: 0 8px 24px rgba(198, 40, 51, 0.08);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: slideInDown 0.7s ease forwards;
+        }
+
+        .barang-masuk-insight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #cf202c 0%, #c62833 50%, #8f1b24 100%);
+            box-shadow: 0 2px 8px rgba(198, 40, 51, 0.2);
+        }
+
+        .barang-masuk-insight::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(22, 163, 74, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .barang-masuk-insight:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(22, 163, 74, 0.12);
+            border-color: rgba(22, 163, 74, 0.25);
         }
 
         .barang-masuk-insight__label {
-            font-size: 0.76rem;
-            color: #9f1d28;
-            font-weight: 700;
+            font-size: 0.75rem;
+            color: #8f1b24;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.2rem;
+            letter-spacing: 1px;
+            margin-bottom: 0.6rem;
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.6rem;
+            text-shadow: 0 1px 2px rgba(22, 163, 74, 0.05);
         }
 
         .barang-masuk-insight__value {
-            color: #7f1d1d;
-            font-size: 1.1rem;
-            font-weight: 800;
-            line-height: 1.2;
+            color: #1a1a1a;
+            font-size: 2.2rem;
+            font-weight: 950;
+            line-height: 1.1;
+            letter-spacing: -0.8px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .barang-masuk-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.95rem;
+            gap: 0.9rem;
+            margin-bottom: 1.8rem;
         }
 
         .barang-masuk-chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.38rem;
-            border: 1px solid #f6c8cc;
-            background: linear-gradient(180deg, #fffafa 0%, #fff3f4 100%);
-            color: #8f1b24;
+            gap: 0.6rem;
+            border: 1.5px solid rgba(22, 163, 74, 0.15);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 244, 0.8) 100%);
+            color: #15803d;
             border-radius: 999px;
-            padding: 0.36rem 0.7rem;
-            font-size: 0.82rem;
-            font-weight: 600;
+            padding: 0.65rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .barang-masuk-chip::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 100% 0%, rgba(22, 163, 74, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .barang-masuk-chip:hover {
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(22, 163, 74, 0.06) 100%);
+            border-color: rgba(22, 163, 74, 0.3);
+            box-shadow: 0 8px 20px rgba(22, 163, 74, 0.15);
+            transform: translateY(-3px) scale(1.05);
         }
 
         .barang-masuk-table {
-            border-radius: 0.82rem;
+            border-radius: 1.6rem;
             overflow: hidden;
-            border: 1px solid #f1d1d4;
-            box-shadow: 0 12px 26px rgba(198, 40, 51, 0.1);
+            border: 1px solid rgba(22, 163, 74, 0.12);
+            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.1);
         }
 
         .barang-masuk-table .table thead th {
-            background: linear-gradient(90deg, #cf202c 0%, #b91720 100%);
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 50%, #8f1b24 100%);
             color: #fff;
             border: none;
-            position: sticky;
-            top: 0;
-            z-index: 1;
+            font-weight: 900;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 1.2rem 1rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .barang-masuk-table .table tbody tr {
-            transition: transform 0.14s ease, background-color 0.14s ease;
+            transition: var(--transition);
+            border-bottom: 1px solid rgba(22, 163, 74, 0.08);
         }
 
         .barang-masuk-table .table tbody tr:hover {
-            background-color: #fff6f6;
-            transform: translateX(2px);
+            background: linear-gradient(90deg, rgba(22, 163, 74, 0.08) 0%, rgba(22, 163, 74, 0.04) 100%);
+            transform: translateX(4px);
+            box-shadow: inset 5px 0 0 0 #16a34a;
+        }
+
+        .barang-masuk-table .table td {
+            padding: 1.1rem 1rem;
+            vertical-align: middle;
+            font-weight: 600;
         }
 
         .barang-masuk-tanggal {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
-            font-weight: 600;
-            color: #7f1d1d;
+            gap: 0.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
         }
 
         .barang-masuk-no {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 1.8rem;
-            height: 1.8rem;
-            border-radius: 999px;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            color: #9f1239;
-            font-weight: 700;
-            font-size: 0.78rem;
+            min-width: 2.2rem;
+            height: 2.2rem;
+            border-radius: 0.9rem;
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 100%);
+            color: #fff;
+            font-weight: 900;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 12px rgba(198, 40, 51, 0.2);
+            letter-spacing: 0.5px;
         }
 
         .barang-masuk-jumlah {
-            background: linear-gradient(180deg, #16a34a 0%, #15803d 100%) !important;
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
             color: #fff;
-            border: 1px solid rgba(21, 128, 61, 0.4);
-            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+            border: 1px solid rgba(22, 163, 74, 0.3);
+            box-shadow: 0 6px 16px rgba(22, 163, 74, 0.15) !important;
+            font-weight: 800 !important;
+            padding: 0.5rem 0.9rem !important;
+            border-radius: 0.8rem !important;
+            font-size: 0.78rem !important;
+            letter-spacing: 0.3px;
+        }
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            box-shadow: var(--shadow-sm);
         }
 
-        @media (max-width: 767px) {
+        .barang-masuk-jumlah {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+            color: #fff;
+            border: 1px solid rgba(21, 128, 61, 0.6);
+            box-shadow: var(--shadow-md) !important;
+            font-weight: 700;
+            padding: 0.4rem 0.8rem !important;
+        }
+
+        @media (max-width: 1024px) {
+            .barang-masuk-insights {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
             .barang-masuk-insights {
                 grid-template-columns: 1fr;
-                gap: 0.55rem;
-                margin-bottom: 0.72rem;
+                gap: 0.8rem;
             }
 
             .barang-masuk-insight {
-                padding: 0.58rem 0.7rem;
+                padding: 0.9rem;
             }
 
             .barang-masuk-insight__label {
-                font-size: 0.7rem;
+                font-size: 0.75rem;
             }
 
             .barang-masuk-insight__value {
-                font-size: 0.95rem;
+                font-size: 1.1rem;
             }
 
+            .barang-masuk-table .table th,
+            .barang-masuk-table .table td {
+                padding: 0.7rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 576px) {
             .barang-masuk-meta {
-                gap: 0.45rem;
-                margin-bottom: 0.72rem;
+                flex-direction: column;
             }
 
             .barang-masuk-chip {
-                font-size: 0.74rem;
-                padding: 0.28rem 0.55rem;
-            }
-
-            .barang-masuk-tanggal {
-                font-size: 0.78rem;
-                white-space: nowrap;
+                width: 100%;
             }
         }
 

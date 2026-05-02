@@ -6,104 +6,151 @@
 @section('content')
     @push('styles')
     <style>
+        :root {
+            --primary-red: #c62833;
+            --red-light: #cf202c;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.2);
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .barang-keluar-insights {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 0.95rem;
+            gap: 1.2rem;
+            margin-bottom: 1.6rem;
         }
 
         .barang-keluar-insight {
-            background: linear-gradient(180deg, #fff 0%, #fff7f8 100%);
-            border: 1px solid #f3cfd3;
-            border-radius: 0.8rem;
-            padding: 0.7rem 0.85rem;
-            box-shadow: 0 10px 20px rgba(185, 23, 32, 0.08);
+            background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+            border: 1px solid rgba(198, 40, 51, 0.08);
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: slideInDown 0.6s ease forwards;
+        }
+
+        .barang-keluar-insight::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #cf202c 0%, #c62833 100%);
+        }
+
+        .barang-keluar-insight:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
         }
 
         .barang-keluar-insight__label {
-            font-size: 0.76rem;
+            font-size: 0.8rem;
             color: #9f1d28;
-            font-weight: 700;
+            font-weight: 850;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.2rem;
+            letter-spacing: 0.8px;
+            margin-bottom: 0.4rem;
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.5rem;
         }
 
         .barang-keluar-insight__value {
-            color: #7f1d1d;
-            font-size: 1.1rem;
-            font-weight: 800;
+            color: #2d2d2d;
+            font-size: 1.4rem;
+            font-weight: 950;
             line-height: 1.2;
         }
 
         .barang-keluar-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.95rem;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
         }
 
         .barang-keluar-chip {
             display: inline-flex;
             align-items: center;
-            gap: 0.38rem;
-            border: 1px solid #f6c8cc;
-            background: linear-gradient(180deg, #fffafa 0%, #fff3f4 100%);
+            gap: 0.5rem;
+            border: 1px solid rgba(198, 40, 51, 0.12);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 248, 248, 0.95) 100%);
             color: #8f1b24;
             border-radius: 999px;
-            padding: 0.36rem 0.7rem;
-            font-size: 0.82rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .barang-keluar-chip:hover {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(220, 38, 38, 0.04) 100%);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
 
         .barang-keluar-table {
-            border-radius: 0.82rem;
+            border-radius: 1.2rem;
             overflow: hidden;
-            border: 1px solid #f1d1d4;
-            box-shadow: 0 12px 26px rgba(198, 40, 51, 0.1);
+            border: none;
+            box-shadow: var(--shadow-lg);
         }
 
         .barang-keluar-table .table thead th {
-            background: linear-gradient(90deg, #cf202c 0%, #b91720 100%);
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 100%);
             color: #fff;
             border: none;
-            position: sticky;
-            top: 0;
-            z-index: 1;
+            font-weight: 850;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 1rem 0.8rem;
         }
 
         .barang-keluar-table .table tbody tr {
-            transition: transform 0.14s ease, background-color 0.14s ease;
+            transition: var(--transition);
+            border-bottom: 1px solid rgba(198, 40, 51, 0.06);
         }
 
         .barang-keluar-table .table tbody tr:hover {
-            background-color: #fff6f6;
-            transform: translateX(2px);
+            background: linear-gradient(90deg, rgba(220, 38, 38, 0.04) 0%, rgba(220, 38, 38, 0.02) 100%);
+            transform: translateX(3px);
         }
 
         .barang-keluar-no {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 1.8rem;
-            height: 1.8rem;
+            min-width: 2rem;
+            height: 2rem;
             border-radius: 999px;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            color: #9f1239;
-            font-weight: 700;
-            font-size: 0.78rem;
+            background: linear-gradient(135deg, #cf202c 0%, #c62833 100%);
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            box-shadow: var(--shadow-sm);
         }
 
         .barang-keluar-jumlah {
-            background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
             color: #fff;
-            border: 1px solid rgba(185, 28, 28, 0.4);
-            box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(185, 28, 28, 0.6);
+            box-shadow: var(--shadow-md) !important;
+            font-weight: 700;
+            padding: 0.4rem 0.8rem !important;
         }
 
         .barang-keluar-tanggal {
@@ -111,41 +158,47 @@
             align-items: center;
             gap: 0.4rem;
             font-weight: 600;
-            color: #7f1d1d;
+            color: #2d2d2d;
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 1024px) {
+            .barang-keluar-insights {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
             .barang-keluar-insights {
                 grid-template-columns: 1fr;
-                gap: 0.55rem;
-                margin-bottom: 0.72rem;
+                gap: 0.8rem;
             }
 
             .barang-keluar-insight {
-                padding: 0.58rem 0.7rem;
+                padding: 0.9rem;
             }
 
             .barang-keluar-insight__label {
-                font-size: 0.7rem;
+                font-size: 0.75rem;
             }
 
             .barang-keluar-insight__value {
-                font-size: 0.95rem;
+                font-size: 1.1rem;
             }
 
+            .barang-keluar-table .table th,
+            .barang-keluar-table .table td {
+                padding: 0.7rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 576px) {
             .barang-keluar-meta {
-                gap: 0.45rem;
-                margin-bottom: 0.72rem;
+                flex-direction: column;
             }
 
             .barang-keluar-chip {
-                font-size: 0.74rem;
-                padding: 0.28rem 0.55rem;
-            }
-
-            .barang-keluar-tanggal {
-                font-size: 0.78rem;
-                white-space: nowrap;
+                width: 100%;
             }
         }
 
