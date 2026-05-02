@@ -398,19 +398,6 @@
     </style>
     @endpush
 
-        @media (max-width: 480px) {
-            .dashboard-stat__content {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .dashboard-stat__value {
-                font-size: 1.6rem;
-            }
-        }
-    </style>
-    @endpush
-
     <div class="row g-3">
         <div class="col-lg-3 col-md-6">
             <div class="dashboard-stat">

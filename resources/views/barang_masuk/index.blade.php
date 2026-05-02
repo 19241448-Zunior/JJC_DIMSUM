@@ -215,20 +215,6 @@
             font-size: 0.78rem !important;
             letter-spacing: 0.3px;
         }
-            color: #fff;
-            font-weight: 800;
-            font-size: 0.8rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .barang-masuk-jumlah {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
-            color: #fff;
-            border: 1px solid rgba(21, 128, 61, 0.6);
-            box-shadow: var(--shadow-md) !important;
-            font-weight: 700;
-            padding: 0.4rem 0.8rem !important;
-        }
 
         @media (max-width: 1024px) {
             .barang-masuk-insights {
