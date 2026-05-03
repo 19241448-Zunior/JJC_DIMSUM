@@ -356,6 +356,7 @@
                             <tr>
                                 <th style="width: 5%">No</th>
                                 <th>Barang</th>
+                                <th>Sumber</th>
                                 <th>Jumlah</th>
                                 <th>Tanggal Masuk</th>
                                 <th>Penginput</th>
@@ -373,6 +374,13 @@
                                             <span class="barang-masuk-no">{{ ($barangMasuk->currentPage() - 1) * $barangMasuk->perPage() + $loop->iteration }}</span>
                                         </td>
                                         <td>{{ $item->barang->nama_barang }}</td>
+                                        <td>
+                                            @if(($item->source ?? 'manual') === 'return')
+                                                <span class="badge bg-info text-dark">Sisa Cabang</span>
+                                            @else
+                                                <span class="badge bg-success">Manual</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <span class="badge barang-masuk-jumlah">{{ $item->jumlah }}</span>
                                         </td>
@@ -442,7 +450,7 @@
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="{{ Auth::user()->isOwner() || Auth::user()->isKaryawan() ? 7 : 6 }}" class="text-center text-muted">Tidak ada data</td>
+                                    <td colspan="{{ Auth::user()->isOwner() || Auth::user()->isKaryawan() ? 8 : 7 }}" class="text-center text-muted">Tidak ada data</td>
                                 </tr>
                             @endif
                         </tbody>

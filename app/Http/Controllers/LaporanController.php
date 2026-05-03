@@ -82,108 +82,129 @@ class LaporanController extends Controller
      */
     private function buildLaporan(?string $tanggalMulai, ?string $tanggalSelesai): Collection
     {
-        $query = CabangDistribusi::with(['cabang', 'items.barang'])
-            ->orderBy('tanggal', 'asc')
-            ->orderBy('cabang_id', 'asc');
+        $distribusiQuery = CabangDistribusi::query();
+        $barangMasukQuery = BarangMasuk::query()->where('source', 'manual');
 
         if ($tanggalMulai && $tanggalSelesai) {
-            $query->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]);
+            $distribusiQuery->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]);
+            $barangMasukQuery->whereBetween('tanggal_masuk', [$tanggalMulai, $tanggalSelesai]);
         } elseif ($tanggalMulai) {
-            $query->whereDate('tanggal', '>=', $tanggalMulai);
+            $distribusiQuery->whereDate('tanggal', '>=', $tanggalMulai);
+            $barangMasukQuery->whereDate('tanggal_masuk', '>=', $tanggalMulai);
         } elseif ($tanggalSelesai) {
-            $query->whereDate('tanggal', '<=', $tanggalSelesai);
+            $distribusiQuery->whereDate('tanggal', '<=', $tanggalSelesai);
+            $barangMasukQuery->whereDate('tanggal_masuk', '<=', $tanggalSelesai);
         }
 
-        return $query->get()
-            ->groupBy(function (CabangDistribusi $record) {
-                return $record->tanggal?->format('Y-m-d') ?? '-';
-            })
-            ->map(function (Collection $dailyRecords, string $tanggal) {
-                $dailyItems = $dailyRecords->flatMap(fn (CabangDistribusi $record) => $record->items);
-                $barangIds = $dailyItems->pluck('barang_id')->filter()->unique()->sort()->values();
+        $distribusiDates = $distribusiQuery->pluck('tanggal')
+            ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d'));
+        $barangMasukDates = $barangMasukQuery->pluck('tanggal_masuk')
+            ->map(fn ($date) => Carbon::parse($date)->format('Y-m-d'));
 
-                $detailCabang = $dailyRecords->map(function (CabangDistribusi $record) {
-                    $items = $record->items;
+        $allDates = $distribusiDates
+            ->merge($barangMasukDates)
+            ->unique()
+            ->sort()
+            ->values();
 
-                    $totalBawa = (int) $items->sum('jumlah_bawa');
-                    $totalSisa = (int) $items->sum('jumlah_sisa');
-                    $totalTerpakai = (int) $items->sum('jumlah_terpakai');
-                    $kodeCabang = $record->cabang?->kode_cabang ?: ($record->cabang?->nama_cabang ?? '-');
+        return $allDates->map(function (string $tanggal) {
+            $dailyRecords = CabangDistribusi::with(['cabang', 'items.barang'])
+                ->whereDate('tanggal', $tanggal)
+                ->orderBy('cabang_id', 'asc')
+                ->get();
 
-                    return trim(
-                        $kodeCabang .
-                        ': keluar ' . $totalBawa .
-                        ', kembali ' . $totalSisa .
-                        ', terpakai ' . $totalTerpakai
-                    );
-                })->filter()->implode("\n");
+            $barangMasukData = BarangMasuk::with('barang')
+                ->where('source', 'manual')
+                ->whereDate('tanggal_masuk', $tanggal)
+                ->get();
 
-                // Build detail per barang dengan breakdown per cabang
-                $detailBarang = $barangIds->map(function ($barangId) use ($dailyRecords, $tanggal) {
-                    $barang = Barang::find($barangId);
-                    if (!$barang) {
+            $dailyItems = $dailyRecords->flatMap(fn (CabangDistribusi $record) => $record->items);
+            $barangIds = $dailyItems->pluck('barang_id')
+                ->merge($barangMasukData->pluck('barang_id'))
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            $detailCabang = $dailyRecords->map(function (CabangDistribusi $record) {
+                $items = $record->items;
+                $totalBawa = (int) $items->sum('jumlah_bawa');
+                $totalSisa = (int) $items->sum('jumlah_sisa');
+                $totalTerpakai = (int) $items->sum('jumlah_terpakai');
+                $kodeCabang = $record->cabang?->kode_cabang ?: ($record->cabang?->nama_cabang ?? '-');
+
+                return trim(
+                    $kodeCabang .
+                    ': keluar ' . $totalBawa .
+                    ', kembali ' . $totalSisa .
+                    ', terpakai ' . $totalTerpakai
+                );
+            })->filter()->implode("\n");
+
+            $detailBarang = $barangIds->map(function ($barangId) use ($dailyRecords, $barangMasukData) {
+                $barang = Barang::find($barangId);
+                if (!$barang) {
+                    return null;
+                }
+
+                $perCabang = $dailyRecords->map(function (CabangDistribusi $record) use ($barangId) {
+                    $item = $record->items->firstWhere('barang_id', $barangId);
+                    if (!$item) {
                         return null;
                     }
-
-                    $perCabang = $dailyRecords->map(function (CabangDistribusi $record) use ($barangId) {
-                        $item = $record->items->firstWhere('barang_id', $barangId);
-                        if (!$item) {
-                            return null;
-                        }
-
-                        return [
-                            'cabang_id' => $record->cabang_id,
-                            'nama_cabang' => $record->cabang?->nama_cabang ?? '-',
-                            'kode_cabang' => $record->cabang?->kode_cabang ?? '-',
-                            'jumlah_bawa' => (int) $item->jumlah_bawa,
-                            'jumlah_sisa' => (int) $item->jumlah_sisa,
-                            'jumlah_terpakai' => (int) $item->jumlah_terpakai,
-                        ];
-                    })->filter()->values();
-
-                    if ($perCabang->isEmpty()) {
-                        return null;
-                    }
-
-                    $barangMasuk = BarangMasuk::where('barang_id', $barangId)
-                        ->whereDate('tanggal_masuk', $tanggal)
-                        ->sum('jumlah');
 
                     return [
-                        'barang_id' => $barangId,
-                        'kode_barang' => $barang->kode_barang,
-                        'nama_barang' => $barang->nama_barang,
-                        'total_bawa' => (int) $perCabang->sum('jumlah_bawa'),
-                        'total_sisa' => (int) $perCabang->sum('jumlah_sisa'),
-                        'total_terpakai' => (int) $perCabang->sum('jumlah_terpakai'),
-                        'barang_masuk' => (int) $barangMasuk,
-                        'per_cabang' => $perCabang,
+                        'cabang_id' => $record->cabang_id,
+                        'nama_cabang' => $record->cabang?->nama_cabang ?? '-',
+                        'kode_cabang' => $record->cabang?->kode_cabang ?? '-',
+                        'jumlah_bawa' => (int) $item->jumlah_bawa,
+                        'jumlah_sisa' => (int) $item->jumlah_sisa,
+                        'jumlah_terpakai' => (int) $item->jumlah_terpakai,
                     ];
                 })->filter()->values();
 
-                $totalBarangKeluar = (int) $dailyItems->sum('jumlah_bawa');
-                $totalBarangKembali = (int) $dailyItems->sum('jumlah_sisa');
-                $totalBarangTerpakai = (int) $dailyItems->sum('jumlah_terpakai');
-                $totalBarangMasuk = (int) BarangMasuk::whereDate('tanggal_masuk', $tanggal)->sum('jumlah');
-                $stokRealSaatIni = $barangIds->isEmpty()
-                    ? 0
-                    : (int) Barang::whereIn('id', $barangIds)->sum('stok');
+                $barangMasuk = (int) $barangMasukData
+                    ->where('barang_id', $barangId)
+                    ->sum('jumlah');
+
+                if ($perCabang->isEmpty() && $barangMasuk === 0) {
+                    return null;
+                }
 
                 return [
-                    'tanggal' => Carbon::parse($tanggal)->format('d M Y'),
-                    'tanggal_raw' => $tanggal,
-                    'total_cabang' => $dailyRecords->count(),
-                    'total_barang_keluar' => $totalBarangKeluar,
-                    'total_barang_kembali' => $totalBarangKembali,
-                    'total_barang_terpakai' => $totalBarangTerpakai,
-                    'total_barang_masuk' => $totalBarangMasuk,
-                    'stok_real_saat_ini' => $stokRealSaatIni,
-                    'saldo_harian' => $totalBarangMasuk + $totalBarangKembali - $totalBarangTerpakai,
-                    'detail_cabang' => $detailCabang ?: '-',
-                    'detail_barang' => $detailBarang,
+                    'barang_id' => $barangId,
+                    'kode_barang' => $barang->kode_barang,
+                    'nama_barang' => $barang->nama_barang,
+                    'total_bawa' => (int) $perCabang->sum('jumlah_bawa'),
+                    'total_sisa' => (int) $perCabang->sum('jumlah_sisa'),
+                    'total_terpakai' => (int) $perCabang->sum('jumlah_terpakai'),
+                    'barang_masuk' => $barangMasuk,
+                    'per_cabang' => $perCabang,
                 ];
-            })
-            ->values();
+            })->filter()->values();
+
+            $totalBarangKeluar = (int) $dailyItems->sum('jumlah_bawa');
+            $totalBarangKembali = (int) $dailyItems->sum('jumlah_sisa');
+            $totalBarangTerpakai = (int) $dailyItems->sum('jumlah_terpakai');
+            $totalBarangMasuk = (int) $barangMasukData->sum('jumlah');
+            $stokRealSaatIni = $barangIds->isEmpty()
+                ? 0
+                : (int) Barang::whereIn('id', $barangIds)->sum('stok');
+
+            return [
+                'tanggal' => Carbon::parse($tanggal)->format('d M Y'),
+                'tanggal_raw' => $tanggal,
+                'total_cabang' => $dailyRecords->count(),
+                'total_barang_keluar' => $totalBarangKeluar,
+                'total_barang_kembali' => $totalBarangKembali,
+                'total_barang_terpakai' => $totalBarangTerpakai,
+                'total_barang_masuk' => $totalBarangMasuk,
+                'stok_real_saat_ini' => $stokRealSaatIni,
+                'saldo_harian' => $totalBarangMasuk - $totalBarangTerpakai,
+                'detail_cabang' => $detailCabang ?: '-',
+                'detail_barang' => $detailBarang,
+            ];
+        })->values();
     }
 
     /**
@@ -202,7 +223,7 @@ class LaporanController extends Controller
             fputcsv($handle, ['Laporan Stok Cikampek Jajanan']);
             fputcsv($handle, ['Periode', ($tanggalMulai ?: '-') . ' s/d ' . ($tanggalSelesai ?: '-')]);
             fputcsv($handle, []);
-            fputcsv($handle, ['No', 'Tanggal', 'Total Cabang', 'Keluar/Bawa', 'Kembali/Sisa', 'Terpakai', 'Barang Masuk', 'Saldo Harian', 'Stok Real Saat Ini', 'Detail Cabang']);
+            fputcsv($handle, ['No', 'Tanggal', 'Total Cabang', 'Keluar/Bawa', 'Kembali/Sisa', 'Terpakai (Keluar - Kembali)', 'Barang Masuk Manual', 'Saldo Harian', 'Stok Real Saat Ini', 'Detail Cabang']);
 
             foreach ($laporan as $index => $item) {
                 fputcsv($handle, [

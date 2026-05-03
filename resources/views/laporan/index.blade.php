@@ -52,11 +52,11 @@
                             <div class="laporan-insight__value">{{ $totalKembali }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-box"></i> Total Terpakai</div>
+                            <div class="laporan-insight__label"><i class="fas fa-box"></i> Total Terpakai <small>(Keluar - Kembali)</small></div>
                             <div class="laporan-insight__value">{{ $totalTerpakai }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-cart-shopping"></i> Total Barang Masuk</div>
+                            <div class="laporan-insight__label"><i class="fas fa-cart-shopping"></i> Total Barang Masuk Manual</div>
                             <div class="laporan-insight__value">{{ $totalMasuk }}</div>
                         </div>
                         <div class="laporan-insight">
@@ -99,8 +99,8 @@
                                 <th style="width: 7%">Cabang</th>
                                 <th style="width: 10%">Keluar / Bawa</th>
                                 <th style="width: 10%">Kembali / Sisa</th>
-                                <th style="width: 9%">Terpakai</th>
-                                <th style="width: 10%">Barang Masuk</th>
+                                <th style="width: 9%">Terpakai (Keluar - Kembali)</th>
+                                <th style="width: 10%">Barang Masuk Manual</th>
                                 <th style="width: 11%">Saldo Harian</th>
                                 <th style="width: 11%">Stok Real</th>
                                 <th>Detail Cabang</th>
@@ -136,7 +136,7 @@
                                                                     </div>
                                                                 @endforeach
                                             <div class="barang-summary">
-                                                <strong>Total:</strong> keluar {{ $barang['total_bawa'] }}, kembali {{ $barang['total_sisa'] }}, terpakai {{ $barang['total_terpakai'] }}, masuk {{ $barang['barang_masuk'] }}
+                                                <strong>Total:</strong> keluar {{ $barang['total_bawa'] }}, kembali {{ $barang['total_sisa'] }}, terpakai {{ $barang['total_terpakai'] }}, masuk manual {{ $barang['barang_masuk'] }}
                                             </div>
                                             @endif
                                         </div>

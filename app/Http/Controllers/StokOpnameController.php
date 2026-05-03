@@ -329,6 +329,7 @@ class StokOpnameController extends Controller
                                 $barangMasuk->update([
                                     'jumlah' => $jumlahSisaBaru,
                                     'tanggal_masuk' => $validated['tanggal'],
+                                    'source' => 'return',
                                     'updated_at' => now(),
                                 ]);
 
@@ -344,6 +345,7 @@ class StokOpnameController extends Controller
                             'barang_id' => $barang->id,
                             'user_id' => auth()->id(),
                             'jumlah' => $jumlahSisaBaru,
+                            'source' => 'return',
                             'tanggal_masuk' => $validated['tanggal'],
                             'void_status' => 'none',
                             'created_at' => now(),
