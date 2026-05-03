@@ -52,7 +52,46 @@ class BarangController extends Controller
      */
     public function show(Barang $barang): View
     {
-        return view('barang.show', compact('barang'));
+        // compute totals and per-cabang breakdown for detail page
+        $totalMasuk = \App\Models\BarangMasuk::where('barang_id', $barang->id)->sum('jumlah');
+        $totalKeluar = \App\Models\BarangKeluar::where('barang_id', $barang->id)->sum('jumlah');
+        $stokOpname = \App\Models\StokOpname::where('barang_id', $barang->id)->sum('jumlah_fisik');
+
+        $cabangs = \App\Models\Cabang::all();
+
+        $perCabang = $cabangs->map(function ($cabang) use ($barang) {
+            $bawa = \App\Models\CabangDistribusiItem::where('barang_id', $barang->id)
+                ->whereHas('distribusi', function ($q) use ($cabang) {
+                    $q->where('cabang_id', $cabang->id);
+                })->sum('jumlah_bawa');
+
+            $sisa = \App\Models\CabangDistribusiItem::where('barang_id', $barang->id)
+                ->whereHas('distribusi', function ($q) use ($cabang) {
+                    $q->where('cabang_id', $cabang->id);
+                })->sum('jumlah_sisa');
+
+            $terpakai = \App\Models\CabangDistribusiItem::where('barang_id', $barang->id)
+                ->whereHas('distribusi', function ($q) use ($cabang) {
+                    $q->where('cabang_id', $cabang->id);
+                })->sum('jumlah_terpakai');
+
+            $masukCabang = \App\Models\BarangMasuk::where('barang_id', $barang->id)->where('cabang_id', $cabang->id)->sum('jumlah');
+            $keluarCabang = \App\Models\BarangKeluar::where('barang_id', $barang->id)->where('cabang_id', $cabang->id)->sum('jumlah');
+
+            return [
+                'cabang_id' => $cabang->id,
+                'nama_cabang' => $cabang->nama_cabang,
+                'jumlah_bawa' => (int) $bawa,
+                'jumlah_sisa' => (int) $sisa,
+                'jumlah_terpakai' => (int) $terpakai,
+                'masuk' => (int) $masukCabang,
+                'keluar' => (int) $keluarCabang,
+            ];
+        })->filter(function ($row) {
+            return ($row['jumlah_bawa'] + $row['jumlah_sisa'] + $row['jumlah_terpakai'] + $row['masuk'] + $row['keluar']) > 0;
+        })->values();
+
+        return view('barang.show', compact('barang', 'totalMasuk', 'totalKeluar', 'stokOpname', 'perCabang'));
     }
 
     /**

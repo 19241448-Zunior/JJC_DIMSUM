@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\BarangMasuk;
 use App\Models\BarangKeluar;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -34,6 +35,99 @@ class DashboardController extends Controller
             'recentActivities',
             'lowStockItems'
         ));
+    }
+
+    /**
+     * Search barang by nama or kode and return per-cabang breakdown
+     */
+    public function search(Request $request): View
+    {
+        $query = trim($request->query('q', ''));
+
+        $results = collect();
+        $matchedCount = 0;
+
+        if ($query !== '') {
+            $barangs = Barang::where('nama_barang', 'like', "%{$query}%")
+                ->orWhere('kode_barang', 'like', "%{$query}%")
+                ->get();
+            $matchedCount = $barangs->count();
+
+            foreach ($barangs as $barang) {
+                $perCabang = $this->getPerCabangBreakdown($barang->id);
+
+                $results->push([
+                    'barang' => $barang,
+                    'total_masuk' => (int) BarangMasuk::where('barang_id', $barang->id)->sum('jumlah'),
+                    'total_keluar' => (int) BarangKeluar::where('barang_id', $barang->id)->sum('jumlah'),
+                    'stok_opname' => (int) \App\Models\StokOpname::where('barang_id', $barang->id)->sum('jumlah_fisik'),
+                    'per_cabang' => $perCabang,
+                ]);
+            }
+        }
+
+        return $this->renderSearchResults($query, $results, $matchedCount);
+    }
+
+    private function renderSearchResults(string $query, $results, int $matchedCount): View
+    {
+        $totalBarang = Barang::count();
+        $totalMasuk = BarangMasuk::sum('jumlah');
+        $totalKeluar = BarangKeluar::sum('jumlah');
+        $totalStok = Barang::sum('stok');
+        $chartData = $this->getChartData();
+        $recentActivities = $this->getRecentActivities();
+        $lowStockItems = Barang::getLowStockNotifications();
+
+        return view('dashboard.search', compact(
+            'totalBarang',
+            'totalMasuk',
+            'totalKeluar',
+            'totalStok',
+            'chartData',
+            'recentActivities',
+            'lowStockItems',
+            'query',
+            'results',
+            'matchedCount'
+        ));
+    }
+
+    private function getPerCabangBreakdown(int $barangId)
+    {
+        $cabangs = \App\Models\Cabang::all();
+
+        return $cabangs->map(function ($cabang) use ($barangId) {
+            $bawa = \App\Models\CabangDistribusiItem::where('barang_id', $barangId)
+                ->whereHas('distribusi', function ($q) use ($cabang) {
+                    $q->where('cabang_id', $cabang->id);
+                })->sum('jumlah_bawa');
+
+            $sisa = \App\Models\CabangDistribusiItem::where('barang_id', $barangId)
+                ->whereHas('distribusi', function ($q) use ($cabang) {
+                    $q->where('cabang_id', $cabang->id);
+                })->sum('jumlah_sisa');
+
+            $terpakai = \App\Models\CabangDistribusiItem::where('barang_id', $barangId)
+                ->whereHas('distribusi', function ($q) use ($cabang) {
+                    $q->where('cabang_id', $cabang->id);
+                })->sum('jumlah_terpakai');
+
+            $masukCabang = BarangMasuk::where('barang_id', $barangId)->where('cabang_id', $cabang->id)->sum('jumlah');
+            $keluarCabang = BarangKeluar::where('barang_id', $barangId)->where('cabang_id', $cabang->id)->sum('jumlah');
+
+            return [
+                'cabang_id' => $cabang->id,
+                'nama_cabang' => $cabang->nama_cabang,
+                'jumlah_bawa' => (int) $bawa,
+                'jumlah_sisa' => (int) $sisa,
+                'jumlah_terpakai' => (int) $terpakai,
+                'masuk' => (int) $masukCabang,
+                'keluar' => (int) $keluarCabang,
+            ];
+        })->filter(function ($row) {
+            return ($row['jumlah_bawa'] + $row['jumlah_sisa'] + $row['jumlah_terpakai'] + $row['masuk'] + $row['keluar']) > 0;
+        })->values();
     }
 
     private function getChartData()

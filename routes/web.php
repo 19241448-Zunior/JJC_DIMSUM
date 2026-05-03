@@ -31,6 +31,10 @@ Route::get('/home', function () {
 Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/search', [DashboardController::class, 'search'])->name('dashboard.search');
+
+    // Barang detail (openable from dashboard search)
+    Route::get('/barang/{barang}', [BarangController::class, 'show'])->name('barang.show');
 
     // Read routes for all authenticated users
     Route::resource('barang', BarangController::class)->only(['index']);

@@ -131,6 +131,50 @@
             line-height: 1;
         }
 
+        .navbar-search-form {
+            flex: 1 1 420px;
+            max-width: 560px;
+            margin: 0 1rem;
+        }
+
+        .navbar-search-form .input-group {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .navbar-search-form .form-control {
+            background: transparent;
+            color: #fff;
+            border: none;
+            box-shadow: none;
+            padding-left: 1rem;
+        }
+
+        .navbar-search-form .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .navbar-search-form .form-control:focus {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .navbar-search-form .btn {
+            border: none;
+            background: rgba(255, 237, 78, 0.95);
+            color: #2d2d2d;
+            font-weight: 800;
+            padding-inline: 1rem;
+        }
+
+        .navbar-search-form .btn:hover {
+            background: #ffed4e;
+            color: #1f2937;
+        }
+
         .navbar-text {
             color: white;
             display: flex;
@@ -202,6 +246,18 @@
         @media (max-width: 767px) {
             .navbar-brand-label {
                 display: none;
+            }
+
+            .navbar-search-form {
+                flex-basis: 100%;
+                max-width: none;
+                margin: 0.5rem 0 0;
+                order: 3;
+            }
+
+            .main-header.navbar {
+                flex-wrap: wrap;
+                padding-bottom: 0.65rem;
             }
         }
 
@@ -676,6 +732,13 @@
                 padding: 0.3rem 0.48rem;
             }
 
+            .navbar-search-form .form-control,
+            .navbar-search-form .btn {
+                font-size: 0.78rem;
+                padding-top: 0.34rem;
+                padding-bottom: 0.34rem;
+            }
+
             .content-wrapper {
                 margin-top: 52px;
                 min-height: calc(100vh - 52px);
@@ -700,6 +763,15 @@
                     </a>
                 </li>
             </ul>
+
+            <form class="navbar-search-form d-flex align-items-center" method="GET" action="{{ route('dashboard.search') }}" role="search">
+                <div class="input-group input-group-sm">
+                    <input type="search" name="q" class="form-control" placeholder="Cari barang atau kode barang..." value="{{ request()->routeIs('dashboard.search') ? request('q') : '' }}" aria-label="Cari barang">
+                    <button class="btn btn-light" type="submit">
+                        <i class="fas fa-search me-1"></i> Cari
+                    </button>
+                </div>
+            </form>
 
             <div class="navbar-text ms-auto">
                 <span class="navbar-user-name"><i class="fas fa-user-circle me-2"></i>{{ Auth::user()->name }}</span>
