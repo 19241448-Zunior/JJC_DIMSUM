@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\BarangKeluar;
 use App\Models\BarangMasuk;
+use App\Models\CabangDistribusi;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -30,6 +31,9 @@ class LaporanController extends Controller
         $export = $validated['export'] ?? null;
 
         $laporan = $this->buildLaporan($tanggalMulai, $tanggalSelesai);
+        $summaryByCabang = $this->buildSummaryByCabang($tanggalMulai, $tanggalSelesai);
+        $opnameRows = $this->buildOpnameRows($tanggalMulai, $tanggalSelesai);
+        $transaksiRows = $this->buildTransaksiLaporan($tanggalMulai, $tanggalSelesai);
 
         if ($export === 'excel') {
             return $this->exportExcel($laporan, $tanggalMulai, $tanggalSelesai);
@@ -38,7 +42,6 @@ class LaporanController extends Controller
         if ($export === 'pdf') {
             $filename = 'laporan-stok-' . now()->format('Ymd_His') . '.pdf';
 
-            $transaksiRows = $this->buildTransaksiLaporan($tanggalMulai, $tanggalSelesai);
             $totals = [
                 'masuk' => $transaksiRows->where('jenis', 'Masuk')->sum('jumlah'),
                 'keluar' => $transaksiRows->where('jenis', 'Keluar')->sum('jumlah'),
@@ -48,20 +51,99 @@ class LaporanController extends Controller
             $pdf = Pdf::loadView('laporan.pdf', [
                 'laporan' => $laporan,
                 'transaksiRows' => $transaksiRows,
+                'summaryByCabang' => $summaryByCabang,
+                'opnameRows' => $opnameRows,
                 'totals' => $totals,
                 'tanggalMulai' => $tanggalMulai,
                 'tanggalSelesai' => $tanggalSelesai,
                 'logoBase64' => $this->getLogoBase64(),
-            ])->setPaper('a4', 'portrait')->setOption('defaultFont', 'Arial');
+            ])->setPaper('a4', 'landscape')->setOption('defaultFont', 'Arial');
 
             return $pdf->download($filename);
         }
 
         return view('laporan.index', [
             'laporan' => $laporan,
+            'summaryByCabang' => $summaryByCabang,
+            'opnameRows' => $opnameRows,
+            'transaksiRows' => $transaksiRows,
             'tanggalMulai' => $tanggalMulai,
             'tanggalSelesai' => $tanggalSelesai,
         ]);
+    }
+
+    /**
+     * Build cabang summary from stok opname harian / distribusi data.
+     */
+    private function buildSummaryByCabang(?string $tanggalMulai, ?string $tanggalSelesai): Collection
+    {
+        $records = $this->buildCabangDistribusiRecords($tanggalMulai, $tanggalSelesai);
+
+        return $records
+            ->groupBy(function (CabangDistribusi $record) {
+                return $record->cabang?->nama_cabang ?? '-';
+            })
+            ->map(function (Collection $group) {
+                $items = $group->flatMap(function (CabangDistribusi $record) {
+                    return $record->items;
+                });
+
+                return [
+                    'kode_cabang' => $group->first()?->cabang?->kode_cabang ?? '-',
+                    'nama_cabang' => $group->first()?->cabang?->nama_cabang ?? '-',
+                    'total_transaksi' => $group->count(),
+                    'total_bawa' => (int) $items->sum('jumlah_bawa'),
+                    'total_sisa' => (int) $items->sum('jumlah_sisa'),
+                    'total_terpakai' => (int) $items->sum('jumlah_terpakai'),
+                ];
+            })
+            ->sortBy('nama_cabang')
+            ->values();
+    }
+
+    /**
+     * Build daily opname activity rows for report and PDF.
+     */
+    private function buildOpnameRows(?string $tanggalMulai, ?string $tanggalSelesai): Collection
+    {
+        $records = $this->buildCabangDistribusiRecords($tanggalMulai, $tanggalSelesai);
+
+        return $records->map(function (CabangDistribusi $record) {
+            $items = $record->items;
+
+            return [
+                'tanggal' => $record->tanggal,
+                'waktu_input' => $record->created_at,
+                'nama_cabang' => $record->cabang?->nama_cabang ?? '-',
+                'kode_cabang' => $record->cabang?->kode_cabang ?? '-',
+                'nama_penginput' => $record->user?->name ?? '-',
+                'total_bawa' => (int) $items->sum('jumlah_bawa'),
+                'total_sisa' => (int) $items->sum('jumlah_sisa'),
+                'total_terpakai' => (int) $items->sum('jumlah_terpakai'),
+                'jumlah_item' => $items->count(),
+            ];
+        })->sortByDesc(function (array $row) {
+            return $row['waktu_input'];
+        })->values();
+    }
+
+    /**
+     * Shared CabangDistribusi query builder.
+     */
+    private function buildCabangDistribusiRecords(?string $tanggalMulai, ?string $tanggalSelesai): Collection
+    {
+        $query = CabangDistribusi::with(['cabang', 'user', 'items'])
+            ->latest();
+
+        if ($tanggalMulai && $tanggalSelesai) {
+            $query->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]);
+        } elseif ($tanggalMulai) {
+            $query->whereDate('tanggal', '>=', $tanggalMulai);
+        } elseif ($tanggalSelesai) {
+            $query->whereDate('tanggal', '<=', $tanggalSelesai);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -158,6 +240,7 @@ class LaporanController extends Controller
 
             $stokAwal = 0;
             $stokAkhir = $item->stok;
+            $stokSaatIni = $item->stok;
 
             if ($tanggalMulai) {
                 $masukSebelum = $item->barangMasuk()->whereDate('tanggal_masuk', '<', $tanggalMulai)->sum('jumlah');
@@ -166,6 +249,8 @@ class LaporanController extends Controller
                 $stokAkhir = $stokAwal + $barangMasuk - $barangKeluar;
             }
 
+            $balance = $stokSaatIni - $stokAkhir;
+
             return [
                 'id' => $item->id,
                 'nama_barang' => $item->nama_barang,
@@ -173,6 +258,8 @@ class LaporanController extends Controller
                 'barang_masuk' => $barangMasuk,
                 'barang_keluar' => $barangKeluar,
                 'stok_akhir' => $stokAkhir,
+                'stok_saat_ini' => $stokSaatIni,
+                'balance' => $balance,
             ];
         });
     }
@@ -193,7 +280,7 @@ class LaporanController extends Controller
             fputcsv($handle, ['Laporan Stok Cikampek Jajanan']);
             fputcsv($handle, ['Periode', ($tanggalMulai ?: '-') . ' s/d ' . ($tanggalSelesai ?: '-')]);
             fputcsv($handle, []);
-            fputcsv($handle, ['No', 'Nama Barang', 'Stok Awal', 'Barang Masuk', 'Barang Keluar', 'Stok Akhir']);
+            fputcsv($handle, ['No', 'Nama Barang', 'Stok Awal', 'Barang Masuk', 'Barang Keluar', 'Stok Saat Ini', 'Stok Akhir', 'Balance']);
 
             foreach ($laporan as $index => $item) {
                 fputcsv($handle, [
@@ -202,7 +289,9 @@ class LaporanController extends Controller
                     $item['stok_awal'],
                     $item['barang_masuk'],
                     $item['barang_keluar'],
+                    $item['stok_saat_ini'],
                     $item['stok_akhir'],
+                    $item['balance'],
                 ]);
             }
 

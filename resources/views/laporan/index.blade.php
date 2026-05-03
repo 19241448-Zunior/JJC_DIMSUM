@@ -10,6 +10,10 @@
         $totalMasuk = $laporanCollection->sum('barang_masuk');
         $totalKeluar = $laporanCollection->sum('barang_keluar');
         $totalStokAkhir = $laporanCollection->sum('stok_akhir');
+        $totalStokSaatIni = $laporanCollection->sum('stok_saat_ini');
+        $totalBalance = $laporanCollection->sum('balance');
+        $summaryCabangCollection = collect($summaryByCabang ?? []);
+        $opnameCollection = collect($opnameRows ?? []);
     @endphp
 
     <div class="print-only-header">
@@ -46,6 +50,14 @@
                             <div class="laporan-insight__value">{{ $totalKeluar }}</div>
                         </div>
                         <div class="laporan-insight">
+                            <div class="laporan-insight__label"><i class="fas fa-boxes"></i> Total Stok Saat Ini</div>
+                            <div class="laporan-insight__value">{{ $totalStokSaatIni }}</div>
+                        </div>
+                        <div class="laporan-insight">
+                            <div class="laporan-insight__label"><i class="fas fa-scale-balanced"></i> Total Balance</div>
+                            <div class="laporan-insight__value">{{ $totalBalance }}</div>
+                        </div>
+                        <div class="laporan-insight">
                             <div class="laporan-insight__label"><i class="fas fa-boxes"></i> Total Stok Akhir</div>
                             <div class="laporan-insight__value">{{ $totalStokAkhir }}</div>
                         </div>
@@ -73,6 +85,7 @@
                     <div class="laporan-meta">
                         <span class="laporan-chip"><i class="fas fa-database"></i> Data: {{ $totalBarang }} barang</span>
                         <span class="laporan-chip"><i class="fas fa-clock"></i> Sinkron: {{ now()->format('d M Y H:i') }} WIB</span>
+                        <span class="laporan-chip"><i class="fas fa-map-marked-alt"></i> Cabang: {{ $summaryCabangCollection->count() }}</span>
                     </div>
 
                     <div class="table-responsive laporan-table">
@@ -84,7 +97,9 @@
                                 <th>Stok Awal</th>
                                 <th>Barang Masuk</th>
                                 <th>Barang Keluar</th>
+                                <th>Stok Saat Ini</th>
                                 <th>Stok Akhir</th>
+                                <th>Balance</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -101,17 +116,115 @@
                                             <span class="badge laporan-badge laporan-badge--keluar">{{ $item['barang_keluar'] }}</span>
                                         </td>
                                         <td class="text-center">
+                                            <span class="badge laporan-badge laporan-badge--muted">{{ $item['stok_saat_ini'] }}</span>
+                                        </td>
+                                        <td class="text-center">
                                             <span class="badge laporan-badge laporan-badge--akhir">{{ $item['stok_akhir'] }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge laporan-badge {{ $item['balance'] == 0 ? 'laporan-badge--masuk' : 'laporan-badge--keluar' }}">{{ $item['balance'] }}</span>
                                         </td>
                                     </tr>
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">Tidak ada data</td>
+                                    <td colspan="8" class="text-center text-muted">Tidak ada data</td>
                                 </tr>
                             @endif
                         </tbody>
                     </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Rekap Semua Cabang</h3>
+                    <span class="badge bg-light text-dark">Opname harian masuk ke laporan</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive laporan-table">
+                        <table class="table table-bordered table-striped table-hover table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%">No</th>
+                                    <th>Kode Cabang</th>
+                                    <th>Nama Cabang</th>
+                                    <th>Total Transaksi</th>
+                                    <th>Total Barang Keluar</th>
+                                    <th>Total Barang Sisa</th>
+                                    <th>Total Terpakai</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($summaryCabangCollection as $item)
+                                    <tr>
+                                        <td><span class="laporan-no">{{ $loop->iteration }}</span></td>
+                                        <td>{{ $item['kode_cabang'] }}</td>
+                                        <td>{{ $item['nama_cabang'] }}</td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--muted">{{ $item['total_transaksi'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--keluar">{{ $item['total_bawa'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--masuk">{{ $item['total_sisa'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--akhir">{{ $item['total_terpakai'] }}</span></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Belum ada data opname cabang pada periode ini</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Detail Opname Harian</h3>
+                    <span class="badge bg-light text-dark">Semua aktivitas cabang</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive laporan-table">
+                        <table class="table table-bordered table-striped table-hover table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%">No</th>
+                                    <th>Tanggal</th>
+                                    <th>Cabang</th>
+                                    <th>Penginput</th>
+                                    <th>Total Bawa</th>
+                                    <th>Total Sisa</th>
+                                    <th>Total Terpakai</th>
+                                    <th>Jumlah Item</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($opnameCollection as $item)
+                                    <tr>
+                                        <td><span class="laporan-no">{{ $loop->iteration }}</span></td>
+                                        <td>{{ optional($item['tanggal'])->format('d-m-Y') }}</td>
+                                        <td>{{ $item['nama_cabang'] }}</td>
+                                        <td>{{ $item['nama_penginput'] }}</td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--keluar">{{ $item['total_bawa'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--masuk">{{ $item['total_sisa'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--akhir">{{ $item['total_terpakai'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--muted">{{ $item['jumlah_item'] }}</span></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted">Belum ada data opname harian pada periode ini</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

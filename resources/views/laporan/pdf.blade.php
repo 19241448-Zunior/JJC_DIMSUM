@@ -155,6 +155,32 @@
             text-align: right;
         }
 
+        .section-title {
+            margin: 14px 0 8px;
+            padding: 6px 8px;
+            background: #fff1f2;
+            border-left: 4px solid #cf202c;
+            color: #8f1b24;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .summary-table td {
+            font-size: 10px;
+            background: #fffafa;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #8f1b24;
+        }
+
+        .compact-note {
+            margin-top: 6px;
+            font-size: 10px;
+            color: #6b7280;
+        }
+
         .hint {
             margin-top: 8px;
             font-size: 11px;
@@ -170,6 +196,14 @@
     </style>
 </head>
 <body>
+    @php
+        $summaryCabangCollection = collect($summaryByCabang ?? []);
+        $opnameCollection = collect($opnameRows ?? []);
+        $laporanCollection = collect($laporan ?? []);
+        $totalStokSaatIni = $laporanCollection->sum('stok_saat_ini');
+        $totalBalance = $laporanCollection->sum('balance');
+    @endphp
+
     <div class="header">
         <div class="header-left">
             @if(!empty($logoBase64))
@@ -197,6 +231,122 @@
             </td>
         </tr>
     </table>
+
+    <table class="legend-table summary-table">
+        <tr>
+            <td>Total Barang: <span class="summary-value">{{ $laporanCollection->count() }}</span></td>
+            <td>Total Cabang: <span class="summary-value">{{ $summaryCabangCollection->count() }}</span></td>
+            <td>Total Transaksi Masuk: <span class="summary-value">{{ $totals['masuk'] }}</span></td>
+            <td>Total Transaksi Keluar: <span class="summary-value">{{ $totals['keluar'] }}</span></td>
+        </tr>
+        <tr>
+            <td>Total Stok Saat Ini: <span class="summary-value">{{ $totalStokSaatIni }}</span></td>
+            <td>Total Balance: <span class="summary-value">{{ $totalBalance }}</span></td>
+            <td colspan="2">Keterangan: balance = stok saat ini - stok akhir per periode.</td>
+        </tr>
+    </table>
+
+    <div class="section-title">Laporan Stok Barang</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th>Nama Barang</th>
+                <th style="width: 9%;">Stok Awal</th>
+                <th style="width: 9%;">Masuk</th>
+                <th style="width: 9%;">Keluar</th>
+                <th style="width: 10%;">Stok Saat Ini</th>
+                <th style="width: 9%;">Stok Akhir</th>
+                <th style="width: 8%;">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($laporanCollection as $item)
+                <tr>
+                    <td class="center">{{ $loop->iteration }}</td>
+                    <td>{{ $item['nama_barang'] }}</td>
+                    <td class="center">{{ $item['stok_awal'] }}</td>
+                    <td class="center">{{ $item['barang_masuk'] }}</td>
+                    <td class="center">{{ $item['barang_keluar'] }}</td>
+                    <td class="center">{{ $item['stok_saat_ini'] }}</td>
+                    <td class="center">{{ $item['stok_akhir'] }}</td>
+                    <td class="center">{{ $item['balance'] }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="8" class="center">Tidak ada data stok barang pada periode ini</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div class="section-title">Rekap Semua Cabang</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th style="width: 12%;">Kode Cabang</th>
+                <th>Nama Cabang</th>
+                <th style="width: 12%;">Total Transaksi</th>
+                <th style="width: 12%;">Total Barang Keluar</th>
+                <th style="width: 12%;">Total Barang Sisa</th>
+                <th style="width: 12%;">Total Terpakai</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($summaryCabangCollection as $item)
+                <tr>
+                    <td class="center">{{ $loop->iteration }}</td>
+                    <td class="center">{{ $item['kode_cabang'] }}</td>
+                    <td>{{ $item['nama_cabang'] }}</td>
+                    <td class="center">{{ $item['total_transaksi'] }}</td>
+                    <td class="center">{{ $item['total_bawa'] }}</td>
+                    <td class="center">{{ $item['total_sisa'] }}</td>
+                    <td class="center">{{ $item['total_terpakai'] }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" class="center">Tidak ada data rekap cabang pada periode ini</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div class="section-title">Detail Opname Harian</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th style="width: 10%;">Tanggal</th>
+                <th>Cabang</th>
+                <th style="width: 18%;">Penginput</th>
+                <th style="width: 10%;">Total Bawa</th>
+                <th style="width: 10%;">Total Sisa</th>
+                <th style="width: 10%;">Total Terpakai</th>
+                <th style="width: 10%;">Item</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($opnameCollection as $item)
+                <tr>
+                    <td class="center">{{ $loop->iteration }}</td>
+                    <td class="center">{{ optional($item['tanggal'])->format('d-m-Y') }}</td>
+                    <td>{{ $item['nama_cabang'] }}</td>
+                    <td>{{ $item['nama_penginput'] }}</td>
+                    <td class="center">{{ $item['total_bawa'] }}</td>
+                    <td class="center">{{ $item['total_sisa'] }}</td>
+                    <td class="center">{{ $item['total_terpakai'] }}</td>
+                    <td class="center">{{ $item['jumlah_item'] }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="8" class="center">Tidak ada data opname harian pada periode ini</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div class="compact-note">Catatan: total barang keluar dan sisa pada rekap cabang berasal dari input opname harian (pagi dan malam) sehingga hasil PDF sama dengan tampilan web.</div>
 
     <table>
         <thead>
