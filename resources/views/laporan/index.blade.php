@@ -6,12 +6,12 @@
 @section('content')
     @php
         $laporanCollection = collect($laporan);
-        $totalBarang = $laporanCollection->count();
-        $totalMasuk = $laporanCollection->sum('barang_masuk');
-        $totalKeluar = $laporanCollection->sum('barang_keluar');
-        $totalStokAkhir = $laporanCollection->sum('stok_akhir');
-        $totalStokSaatIni = $laporanCollection->sum('stok_saat_ini');
-        $totalBalance = $laporanCollection->sum('balance');
+        $totalHari = $laporanCollection->count();
+        $totalCabang = $laporanCollection->sum('total_cabang');
+        $totalKeluar = $laporanCollection->sum('total_barang_keluar');
+        $totalKembali = $laporanCollection->sum('total_barang_kembali');
+        $totalTerpakai = $laporanCollection->sum('total_barang_terpakai');
+        $totalMasuk = $laporanCollection->sum('total_barang_masuk');
     @endphp
 
     <div class="print-only-header">
@@ -36,28 +36,32 @@
                 <div class="card-body">
                     <div class="laporan-insights">
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-cubes"></i> Total Barang</div>
-                            <div class="laporan-insight__value">{{ $totalBarang }}</div>
+                            <div class="laporan-insight__label"><i class="fas fa-calendar-day"></i> Total Hari</div>
+                            <div class="laporan-insight__value">{{ $totalHari }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-arrow-down"></i> Total Masuk</div>
-                            <div class="laporan-insight__value">{{ $totalMasuk }}</div>
+                            <div class="laporan-insight__label"><i class="fas fa-store"></i> Total Cabang</div>
+                            <div class="laporan-insight__value">{{ $totalCabang }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-arrow-up"></i> Total Keluar</div>
+                            <div class="laporan-insight__label"><i class="fas fa-arrow-up"></i> Total Keluar / Bawa</div>
                             <div class="laporan-insight__value">{{ $totalKeluar }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-boxes"></i> Total Stok Saat Ini</div>
-                            <div class="laporan-insight__value">{{ $totalStokSaatIni }}</div>
+                            <div class="laporan-insight__label"><i class="fas fa-rotate-left"></i> Total Kembali / Sisa</div>
+                            <div class="laporan-insight__value">{{ $totalKembali }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-scale-balanced"></i> Total Balance</div>
-                            <div class="laporan-insight__value">{{ $totalBalance }}</div>
+                            <div class="laporan-insight__label"><i class="fas fa-box"></i> Total Terpakai</div>
+                            <div class="laporan-insight__value">{{ $totalTerpakai }}</div>
                         </div>
                         <div class="laporan-insight">
-                            <div class="laporan-insight__label"><i class="fas fa-boxes"></i> Total Stok Akhir</div>
-                            <div class="laporan-insight__value">{{ $totalStokAkhir }}</div>
+                            <div class="laporan-insight__label"><i class="fas fa-cart-shopping"></i> Total Barang Masuk</div>
+                            <div class="laporan-insight__value">{{ $totalMasuk }}</div>
+                        </div>
+                        <div class="laporan-insight">
+                            <div class="laporan-insight__label"><i class="fas fa-boxes-stacked"></i> Stok Real Saat Ini</div>
+                            <div class="laporan-insight__value">{{ $stokRealTotal ?? 0 }}</div>
                         </div>
                     </div>
 
@@ -81,7 +85,8 @@
                     </form>
 
                     <div class="laporan-meta">
-                        <span class="laporan-chip"><i class="fas fa-database"></i> Data: {{ $totalBarang }} barang</span>
+                        <span class="laporan-chip"><i class="fas fa-database"></i> Data: {{ $totalHari }} hari</span>
+                        <span class="laporan-chip"><i class="fas fa-truck-arrow-right"></i> Cabang tercatat: {{ $totalCabang }}</span>
                         <span class="laporan-chip"><i class="fas fa-clock"></i> Sinkron: {{ now()->format('d M Y H:i') }} WIB</span>
                     </div>
 
@@ -90,45 +95,63 @@
                         <thead>
                             <tr>
                                 <th style="width: 5%">No</th>
-                                <th style="width: 8%">Kode Barang</th>
-                                <th style="width: 13%">Nama Barang</th>
-                                <th style="width: 9%">Stok Saat Ini/Awal</th>
-                                <th style="width: 8%">Barang Masuk</th>
-                                <th style="width: 8%">Barang Keluar</th>
-                                <th style="width: 9%">Stok Akhir</th>
-                                <th style="width: 8%">Balance</th>
+                                <th style="width: 11%">Tanggal</th>
+                                <th style="width: 7%">Cabang</th>
+                                <th style="width: 10%">Keluar / Bawa</th>
+                                <th style="width: 10%">Kembali / Sisa</th>
+                                <th style="width: 9%">Terpakai</th>
+                                <th style="width: 10%">Barang Masuk</th>
+                                <th style="width: 11%">Saldo Harian</th>
+                                <th style="width: 11%">Stok Real</th>
                                 <th>Detail Cabang</th>
                             </tr>
                         </thead>
                         <tbody>
                             @if(count($laporan) > 0)
                                 @foreach($laporan as $item)
-                                    <tr>
+                                    <tr class="laporan-summary-row">
                                         <td><span class="laporan-no">{{ $loop->iteration }}</span></td>
-                                        <td>{{ $item['kode_barang'] }}</td>
-                                        <td>{{ $item['nama_barang'] }}</td>
-                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--muted">{{ $item['stok_awal'] }}</span></td>
-                                        <td class="text-center">
-                                            <span class="badge laporan-badge laporan-badge--masuk">{{ $item['barang_masuk'] }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge laporan-badge laporan-badge--keluar">{{ $item['barang_keluar'] }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge laporan-badge laporan-badge--akhir">{{ $item['stok_akhir'] }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge laporan-badge {{ $item['balance'] == 0 ? 'laporan-badge--masuk' : 'laporan-badge--keluar' }}">{{ $item['balance'] }}</span>
-                                        </td>
+                                        <td>{{ $item['tanggal'] }}</td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--muted">{{ $item['total_cabang'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--keluar">{{ $item['total_barang_keluar'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--masuk">{{ $item['total_barang_kembali'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--akhir">{{ $item['total_barang_terpakai'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--muted">{{ $item['total_barang_masuk'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--akhir">{{ $item['saldo_harian'] }}</span></td>
+                                        <td class="text-center"><span class="badge laporan-badge laporan-badge--muted">{{ $item['stok_real_saat_ini'] }}</span></td>
                                         <td class="detail-cabang-cell">{{ $item['detail_cabang'] }}</td>
                                     </tr>
-                                @endforeach
-                            @else
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted">Tidak ada data</td>
-                                </tr>
-                            @endif
-                        </tbody>
+                                    @if(!empty($item['detail_barang']))
+                                        @foreach($item['detail_barang'] as $barang)
+                                            <tr class="laporan-detail-row">
+                                                <td colspan="10" class="laporan-detail-cell">
+                                                    <div class="barang-detail">
+                                                        <div class="barang-header">{{ $barang['kode_barang'] }} - {{ $barang['nama_barang'] }}</div>
+                                                        <div class="barang-content">
+                                                            @if(!empty($barang['per_cabang']))
+                                                                @foreach($barang['per_cabang'] as $cabang)
+                                                                    <div class="cabang-row">
+                                                                        <span class="cabang-name">{{ $cabang['kode_cabang'] }}:</span>
+                                                                        <span class="cabang-detail">keluar {{ $cabang['jumlah_bawa'] }}, kembali {{ $cabang['jumlah_sisa'] }}, terpakai {{ $cabang['jumlah_terpakai'] }}</span>
+                                                                    </div>
+                                                                @endforeach
+                                            <div class="barang-summary">
+                                                <strong>Total:</strong> keluar {{ $barang['total_bawa'] }}, kembali {{ $barang['total_sisa'] }}, terpakai {{ $barang['total_terpakai'] }}, masuk {{ $barang['barang_masuk'] }}
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    @endif
+                @endforeach
+            @else
+                <tr>
+                    <td colspan="10" class="text-center text-muted">Tidak ada data</td>
+                </tr>
+            @endif
+        </tbody>
                     </table>
                     </div>
                 </div>
@@ -352,6 +375,66 @@
             line-height: 1.3;
             word-break: break-word;
             vertical-align: top;
+        }
+
+        .laporan-summary-row {
+            background: #fff !important;
+        }
+
+        .laporan-detail-row {
+            background: linear-gradient(90deg, rgba(206, 32, 44, 0.02) 0%, rgba(206, 32, 44, 0.01) 100%) !important;
+        }
+
+        .laporan-detail-row:hover {
+            background: linear-gradient(90deg, rgba(206, 32, 44, 0.05) 0%, rgba(206, 32, 44, 0.03) 100%) !important;
+        }
+
+        .laporan-detail-cell {
+            padding: 0.8rem !important;
+        }
+
+        .barang-detail {
+            border-left: 3px solid #cf202c;
+            padding-left: 0.8rem;
+        }
+
+        .barang-header {
+            font-weight: 700;
+            color: #9f1d28;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .barang-content {
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .cabang-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+            color: #555;
+        }
+
+        .cabang-name {
+            font-weight: 600;
+            min-width: 50px;
+            color: #2d2d2d;
+        }
+
+        .cabang-detail {
+            flex: 1;
+            color: #666;
+        }
+
+        .barang-summary {
+            border-top: 1px solid rgba(198, 40, 51, 0.1);
+            padding-top: 0.4rem;
+            margin-top: 0.4rem;
+            font-weight: 600;
+            color: #2d2d2d;
+            font-size: 0.85rem;
         }
 
         @media (max-width: 1024px) {
