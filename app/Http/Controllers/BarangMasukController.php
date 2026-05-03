@@ -50,7 +50,6 @@ class BarangMasukController extends Controller
         $validated['created_at'] = now();
         $validated['updated_at'] = now();
         $validated['void_status'] = 'none';
-        $validated['source'] = 'manual';
 
         BarangMasuk::create($validated);
 

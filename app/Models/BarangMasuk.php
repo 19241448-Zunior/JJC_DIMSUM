@@ -19,7 +19,6 @@ class BarangMasuk extends Model
         'cabang_id',
         'lokasi_id',
         'jumlah',
-        'source',
         'tanggal_masuk',
         'void_status',
         'void_reason',

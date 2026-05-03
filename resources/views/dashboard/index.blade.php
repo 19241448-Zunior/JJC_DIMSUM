@@ -418,7 +418,7 @@
             <div class="dashboard-stat">
                 <div class="dashboard-stat__content">
                     <div>
-                        <p class="dashboard-stat__title">Total Barang Masuk Manual</p>
+                        <p class="dashboard-stat__title">Total Barang Masuk</p>
                         <p class="dashboard-stat__value">{{ $totalMasuk }}</p>
                     </div>
                     <div class="dashboard-stat__icon stat-green"><i class="fas fa-arrow-down"></i></div>
@@ -489,11 +489,7 @@
                                         <div>
                                             <span class="activity-log-user">{{ $activity->penginput }}</span>
                                             @if($activity->tipe === 'masuk')
-                                                @if(($activity->source ?? null) === 'return')
-                                                    <span class="badge bg-info text-dark ms-1">Sisa Kembali</span>
-                                                @else
-                                                    <span class="badge bg-success ms-1">Masuk Manual</span>
-                                                @endif
+                                                <span class="badge bg-success ms-1">Masuk</span>
                                             @else
                                                 <span class="badge bg-danger ms-1">Keluar</span>
                                             @endif
@@ -502,9 +498,6 @@
                                     </div>
                                     <p class="activity-log-desc mb-0">
                                         {{ $activity->nama_barang }} - Qty {{ $activity->jumlah }}
-                                        @if(($activity->source ?? null) === 'return')
-                                            <small class="text-muted">(sisa cabang kembali)</small>
-                                        @endif
                                     </p>
                                 </div>
                             @empty
@@ -526,7 +519,7 @@
                 labels: @json($chartData['labels']),
                 datasets: [
                     {
-                        label: 'Barang Masuk Manual',
+                        label: 'Barang Masuk',
                         data: @json($chartData['masukData']),
                         backgroundColor: 'rgba(245, 158, 11, 0.75)',
                         borderColor: '#f59e0b',

@@ -83,7 +83,7 @@ class LaporanController extends Controller
     private function buildLaporan(?string $tanggalMulai, ?string $tanggalSelesai): Collection
     {
         $distribusiQuery = CabangDistribusi::query();
-        $barangMasukQuery = BarangMasuk::query()->where('source', 'manual');
+        $barangMasukQuery = BarangMasuk::query();
 
         if ($tanggalMulai && $tanggalSelesai) {
             $distribusiQuery->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]);
@@ -114,7 +114,6 @@ class LaporanController extends Controller
                 ->get();
 
             $barangMasukData = BarangMasuk::with('barang')
-                ->where('source', 'manual')
                 ->whereDate('tanggal_masuk', $tanggal)
                 ->get();
 
@@ -200,7 +199,7 @@ class LaporanController extends Controller
                 'total_barang_terpakai' => $totalBarangTerpakai,
                 'total_barang_masuk' => $totalBarangMasuk,
                 'stok_real_saat_ini' => $stokRealSaatIni,
-                'saldo_harian' => $totalBarangMasuk - $totalBarangTerpakai,
+                'saldo_harian' => $totalBarangMasuk + $totalBarangKembali - $totalBarangTerpakai,
                 'detail_cabang' => $detailCabang ?: '-',
                 'detail_barang' => $detailBarang,
             ];
@@ -223,7 +222,7 @@ class LaporanController extends Controller
             fputcsv($handle, ['Laporan Stok Cikampek Jajanan']);
             fputcsv($handle, ['Periode', ($tanggalMulai ?: '-') . ' s/d ' . ($tanggalSelesai ?: '-')]);
             fputcsv($handle, []);
-            fputcsv($handle, ['No', 'Tanggal', 'Total Cabang', 'Keluar/Bawa', 'Kembali/Sisa', 'Terpakai (Keluar - Kembali)', 'Barang Masuk Manual', 'Saldo Harian', 'Stok Real Saat Ini', 'Detail Cabang']);
+            fputcsv($handle, ['No', 'Tanggal', 'Total Cabang', 'Keluar/Bawa', 'Kembali/Sisa', 'Terpakai', 'Barang Masuk', 'Saldo Harian', 'Stok Real Saat Ini', 'Detail Cabang']);
 
             foreach ($laporan as $index => $item) {
                 fputcsv($handle, [
@@ -243,7 +242,6 @@ class LaporanController extends Controller
                 if (!empty($item['detail_barang'])) {
                     foreach ($item['detail_barang'] as $barang) {
                         fputcsv($handle, [
-                            '',
                             '  ' . $barang['kode_barang'] . ' - ' . $barang['nama_barang'],
                             '',
                             '',

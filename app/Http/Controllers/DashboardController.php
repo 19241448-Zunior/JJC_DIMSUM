@@ -15,7 +15,7 @@ class DashboardController extends Controller
     public function index(): View
     {
         $totalBarang = Barang::count();
-        $totalMasuk = BarangMasuk::where('source', 'manual')->sum('jumlah');
+        $totalMasuk = BarangMasuk::sum('jumlah');
         $totalKeluar = BarangKeluar::sum('jumlah');
         $totalStok = Barang::sum('stok');
 
@@ -72,7 +72,7 @@ class DashboardController extends Controller
     private function renderSearchResults(string $query, $results, int $matchedCount): View
     {
         $totalBarang = Barang::count();
-        $totalMasuk = BarangMasuk::where('source', 'manual')->sum('jumlah');
+        $totalMasuk = BarangMasuk::sum('jumlah');
         $totalKeluar = BarangKeluar::sum('jumlah');
         $totalStok = Barang::sum('stok');
         $chartData = $this->getChartData();
@@ -143,7 +143,7 @@ class DashboardController extends Controller
             $date = now()->subDays($i)->format('Y-m-d');
             $labels[] = now()->subDays($i)->format('d M');
 
-            $masuk = BarangMasuk::where('source', 'manual')->whereDate($tanggalMasukColumn, $date)->sum('jumlah');
+            $masuk = BarangMasuk::whereDate($tanggalMasukColumn, $date)->sum('jumlah');
             $keluar = BarangKeluar::whereDate($tanggalKeluarColumn, $date)->sum('jumlah');
 
             $masukData[] = $masuk;
@@ -164,14 +164,14 @@ class DashboardController extends Controller
             ->join('barang', 'barang.id', '=', 'barang_masuk.barang_id')
             ->where('users.role', 'karyawan')
             ->whereNull('barang_masuk.deleted_at')
-            ->selectRaw("'masuk' as tipe, barang_masuk.source as source, users.name as penginput, barang.nama_barang, barang_masuk.jumlah, barang_masuk.created_at");
+            ->selectRaw("'masuk' as tipe, users.name as penginput, barang.nama_barang, barang_masuk.jumlah, barang_masuk.created_at");
 
         return DB::table('barang_keluar')
             ->join('users', 'users.id', '=', 'barang_keluar.user_id')
             ->join('barang', 'barang.id', '=', 'barang_keluar.barang_id')
             ->where('users.role', 'karyawan')
             ->whereNull('barang_keluar.deleted_at')
-                ->selectRaw("'keluar' as tipe, null as source, users.name as penginput, barang.nama_barang, barang_keluar.jumlah, barang_keluar.created_at")
+            ->selectRaw("'keluar' as tipe, users.name as penginput, barang.nama_barang, barang_keluar.jumlah, barang_keluar.created_at")
             ->unionAll($masuk)
             ->orderByDesc('created_at')
             ->limit(5)
