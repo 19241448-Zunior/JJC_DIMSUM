@@ -20,8 +20,6 @@ class Barang extends Model
         'stok_min',
         'status',
         'stok',
-        'cabang_id',
-        'lokasi_default_id',
     ];
 
     protected static function booted()
@@ -83,22 +81,6 @@ class Barang extends Model
     public function cabangDistribusiItems(): HasMany
     {
         return $this->hasMany(CabangDistribusiItem::class);
-    }
-
-    /**
-     * Get the cabang this barang belongs to
-     */
-    public function cabang(): BelongsTo
-    {
-        return $this->belongsTo(Cabang::class);
-    }
-
-    /**
-     * Get the default storage location for this barang
-     */
-    public function lokasiDefault(): BelongsTo
-    {
-        return $this->belongsTo(LokasiPenyimpanan::class, 'lokasi_default_id');
     }
 
     /**
