@@ -441,10 +441,14 @@
                         <thead>
                             <tr>
                                 <th style="width: 5%">No</th>
+                                <th>Kode</th>
                                 <th>Nama Barang</th>
-                                <th style="width: 15%">Stok</th>
+                                <th>Satuan</th>
+                                <th>Stok Minimal</th>
+                                <th>Status</th>
+                                <th style="width: 12%">Stok</th>
                                 @if(Auth::user()->isOwner())
-                                    <th style="width: 20%">Aksi</th>
+                                    <th style="width: 18%">Aksi</th>
                                 @endif
                             </tr>
                         </thead>
@@ -453,7 +457,11 @@
                                 @foreach($barang as $item)
                                     <tr>
                                         <td><span class="barang-no">{{ ($barang->currentPage() - 1) * $barang->perPage() + $loop->iteration }}</span></td>
+                                        <td>{{ $item->kode_barang }}</td>
                                         <td>{{ $item->nama_barang }}</td>
+                                        <td>{{ $item->satuan ?? '-' }}</td>
+                                        <td>{{ $item->stok_min ?? 5 }}</td>
+                                        <td>{{ $item->status ?? ($item->stok >= ($item->stok_min ?? 5) ? 'normal' : 'low') }}</td>
                                         <td>
                                             <span class="badge barang-stok">{{ $item->stok }}</span>
                                         </td>

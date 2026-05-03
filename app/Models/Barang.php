@@ -14,11 +14,52 @@ class Barang extends Model
     protected $table = 'barang';
 
     protected $fillable = [
+        'kode_barang',
         'nama_barang',
+        'satuan',
+        'stok_min',
+        'status',
         'stok',
         'cabang_id',
         'lokasi_default_id',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($barang) {
+            // ensure stok_min default
+            if (empty($barang->stok_min)) {
+                $barang->stok_min = 5;
+            }
+
+            // determine satuan if not provided
+            if (empty($barang->satuan) && !empty($barang->nama_barang)) {
+                $nama = strtolower($barang->nama_barang);
+                if (str_contains($nama, 'tusuk') || str_contains($nama, 'sedotan') || str_contains($nama, 'cup') || str_contains($nama, 'sumpit')) {
+                    $barang->satuan = 'pack';
+                }
+                if (str_contains($nama, 'piring') || str_contains($nama, 'gelas')) {
+                    $barang->satuan = 'pcs';
+                }
+            }
+
+            // generate kode_barang: 2 letters + digits
+            if (empty($barang->kode_barang) && !empty($barang->nama_barang)) {
+                $letters = preg_replace('/[^a-zA-Z]/', '', $barang->nama_barang);
+                $prefix = strtoupper(substr($letters, 0, 2));
+                if (strlen($prefix) < 2) {
+                    $prefix = str_pad($prefix, 2, 'X');
+                }
+                // append timestamp-based numbers to reduce collisions
+                $barang->kode_barang = $prefix . rand(100, 999);
+            }
+
+            // determine status based on stok vs stok_min
+            $stok = (int) ($barang->stok ?? 0);
+            $stokMin = (int) ($barang->stok_min ?? 5);
+            $barang->status = $stok >= $stokMin ? 'normal' : 'low';
+        });
+    }
 
     /**
      * Get all barang masuk for this barang

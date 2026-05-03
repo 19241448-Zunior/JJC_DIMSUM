@@ -23,6 +23,29 @@
                             @enderror
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="satuan" class="form-label">Satuan</label>
+                                <select id="satuan" name="satuan" class="form-select @error('satuan') is-invalid @enderror">
+                                    <option value="" {{ old('satuan') == '' ? 'selected' : '' }}>Auto (deteksi dari nama)</option>
+                                    <option value="pack" {{ old('satuan') == 'pack' ? 'selected' : '' }}>pack</option>
+                                    <option value="pcs" {{ old('satuan') == 'pcs' ? 'selected' : '' }}>pcs</option>
+                                </select>
+                                @error('satuan')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="stok_min" class="form-label">Stok Minimal</label>
+                                <input type="number" id="stok_min" name="stok_min" min="0" class="form-control @error('stok_min') is-invalid @enderror" value="{{ old('stok_min', 5) }}">
+                                @error('stok_min')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Default: 5</div>
+                            </div>
+                        </div>
+
                         <div class="alert alert-info">
                             Stok awal otomatis diset ke <strong>0</strong>. Anda cukup isi nama barang.
                         </div>

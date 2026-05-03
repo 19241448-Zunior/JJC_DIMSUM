@@ -33,10 +33,14 @@ class BarangController extends Controller
     {
         $validated = $request->validate([
             'nama_barang' => 'required|string|unique:barang|max:255',
+            'satuan' => 'nullable|string|max:50',
+            'stok_min' => 'nullable|integer|min:0',
         ]);
 
         Barang::create([
             'nama_barang' => $validated['nama_barang'],
+            'satuan' => $validated['satuan'] ?? null,
+            'stok_min' => $validated['stok_min'] ?? 5,
             'stok' => 0,
         ]);
 
@@ -66,10 +70,14 @@ class BarangController extends Controller
     {
         $validated = $request->validate([
             'nama_barang' => 'required|string|unique:barang,nama_barang,' . $barang->id . '|max:255',
+            'satuan' => 'nullable|string|max:50',
+            'stok_min' => 'nullable|integer|min:0',
         ]);
 
         $barang->update([
             'nama_barang' => $validated['nama_barang'],
+            'satuan' => $validated['satuan'] ?? $barang->satuan,
+            'stok_min' => $validated['stok_min'] ?? $barang->stok_min,
         ]);
 
         return redirect()->route('barang.index')->with('success', 'Barang berhasil diperbarui.');
