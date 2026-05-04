@@ -50,6 +50,8 @@ class BarangMasukController extends Controller
         $validated['created_at'] = now();
         $validated['updated_at'] = now();
         $validated['void_status'] = 'none';
+        // mark manual owner input as enum key 'manual'
+        $validated['sumber'] = 'manual';
 
         BarangMasuk::create($validated);
 

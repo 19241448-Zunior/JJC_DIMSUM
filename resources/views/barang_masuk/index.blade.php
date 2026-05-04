@@ -359,6 +359,7 @@
                                 <th>Jumlah</th>
                                 <th>Tanggal Masuk</th>
                                 <th>Penginput</th>
+                                <th style="width: 12%">Label</th>
                                 <th>Status Void</th>
                                 @if(Auth::user()->isOwner() || Auth::user()->isKaryawan())
                                     <th style="width: 20%">Aksi</th>
@@ -383,6 +384,16 @@
                                             </span>
                                         </td>
                                         <td>{{ $item->user?->name ?? '-' }}</td>
+                                        <td>
+                                            @php $labelKey = strtolower((string) $item->sumber); @endphp
+                                            @if($labelKey === 'manual')
+                                                <span class="badge bg-primary">Restock Manual</span>
+                                            @elseif($labelKey === 'sisa_cabang')
+                                                <span class="badge bg-secondary">Sisa Cabang</span>
+                                            @else
+                                                <span class="badge bg-light text-dark">{{ $item->sumber ?? '-' }}</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             @if($item->void_status === 'pending')
                                                 <span class="badge bg-warning text-dark">Pending Void</span>

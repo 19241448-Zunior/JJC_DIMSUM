@@ -344,6 +344,7 @@ class StokOpnameController extends Controller
                             'barang_id' => $barang->id,
                             'user_id' => auth()->id(),
                             'jumlah' => $jumlahSisaBaru,
+                            'sumber' => 'sisa_cabang',
                             'tanggal_masuk' => $validated['tanggal'],
                             'void_status' => 'none',
                             'created_at' => now(),

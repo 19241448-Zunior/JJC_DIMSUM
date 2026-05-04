@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\BarangKeluar;
 use App\Models\BarangMasuk;
+use App\Models\Cabang;
 use App\Models\CabangDistribusi;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,7 +33,7 @@ class LaporanController extends Controller
         $export = $validated['export'] ?? null;
 
         $laporan = $this->buildLaporan($tanggalMulai, $tanggalSelesai);
-        $stokRealTotal = (int) Barang::sum('stok');
+        $stokRealTotal = (int) ($laporan->last()['stok_real_saat_ini'] ?? 0);
 
         if ($export === 'excel') {
             return $this->exportExcel($laporan, $tanggalMulai, $tanggalSelesai);
@@ -107,11 +108,15 @@ class LaporanController extends Controller
             ->sort()
             ->values();
 
-        return $allDates->map(function (string $tanggal) {
+        $stokBerjalan = 0;
+
+        return $allDates->map(function (string $tanggal) use (&$stokBerjalan) {
             $dailyRecords = CabangDistribusi::with(['cabang', 'items.barang'])
                 ->whereDate('tanggal', $tanggal)
                 ->orderBy('cabang_id', 'asc')
                 ->get();
+
+            $cabangHeaders = $this->buildCabangHeaders($dailyRecords);
 
             $barangMasukData = BarangMasuk::with('barang')
                 ->whereDate('tanggal_masuk', $tanggal)
@@ -140,7 +145,7 @@ class LaporanController extends Controller
                 );
             })->filter()->implode("\n");
 
-            $detailBarang = $barangIds->map(function ($barangId) use ($dailyRecords, $barangMasukData) {
+            $detailBarang = $barangIds->map(function ($barangId) use ($dailyRecords, $barangMasukData, $cabangHeaders, $tanggal) {
                 $barang = Barang::find($barangId);
                 if (!$barang) {
                     return null;
@@ -162,11 +167,40 @@ class LaporanController extends Controller
                     ];
                 })->filter()->values();
 
+                $perCabangMap = collect($cabangHeaders)->mapWithKeys(function (array $cabang) use ($perCabang) {
+                    $cabangData = $perCabang->firstWhere('cabang_id', $cabang['cabang_id']);
+
+                    return [
+                        (string) $cabang['cabang_id'] => [
+                            'cabang_id' => $cabang['cabang_id'],
+                            'nama_cabang' => $cabang['nama_cabang'],
+                            'kode_cabang' => $cabang['kode_cabang'],
+                            'jumlah_bawa' => (int) ($cabangData['jumlah_bawa'] ?? 0),
+                            'jumlah_sisa' => (int) ($cabangData['jumlah_sisa'] ?? 0),
+                            'jumlah_terpakai' => (int) ($cabangData['jumlah_terpakai'] ?? 0),
+                        ],
+                    ];
+                });
+
+                // Only count manual restock as "barang masuk (belanja)" per new algorithm
                 $barangMasuk = (int) $barangMasukData
                     ->where('barang_id', $barangId)
+                    ->where('sumber', 'manual')
                     ->sum('jumlah');
 
-                if ($perCabang->isEmpty() && $barangMasuk === 0) {
+                // compute historical stock up to this date (include all masuk sources)
+                $masukUpTo = (int) \App\Models\BarangMasuk::where('barang_id', $barangId)
+                    ->whereDate('tanggal_masuk', '<=', $tanggal)
+                    ->sum('jumlah');
+
+                $keluarUpTo = (int) \App\Models\BarangKeluar::where('barang_id', $barangId)
+                    ->whereDate('tanggal_keluar', '<=', $tanggal)
+                    ->sum('jumlah');
+
+                $stokRealAtDate = max(0, $masukUpTo - $keluarUpTo);
+
+                // include barang rows when there is activity or there is a real stock at date
+                if ($perCabang->isEmpty() && $barangMasuk === 0 && $stokRealAtDate === 0) {
                     return null;
                 }
 
@@ -178,17 +212,24 @@ class LaporanController extends Controller
                     'total_sisa' => (int) $perCabang->sum('jumlah_sisa'),
                     'total_terpakai' => (int) $perCabang->sum('jumlah_terpakai'),
                     'barang_masuk' => $barangMasuk,
+                    // stok real at the report date (cumulative masuk - keluar)
+                    'stok_real' => $stokRealAtDate,
                     'per_cabang' => $perCabang,
+                    'per_cabang_map' => $perCabangMap,
                 ];
             })->filter()->values();
 
             $totalBarangKeluar = (int) $dailyItems->sum('jumlah_bawa');
             $totalBarangKembali = (int) $dailyItems->sum('jumlah_sisa');
-            $totalBarangTerpakai = (int) $dailyItems->sum('jumlah_terpakai');
-            $totalBarangMasuk = (int) $barangMasukData->sum('jumlah');
-            $stokRealSaatIni = $barangIds->isEmpty()
-                ? 0
-                : (int) Barang::whereIn('id', $barangIds)->sum('stok');
+            // Terpakai = keluar - kembali
+            $totalBarangTerpakai = (int) max(0, $totalBarangKeluar - $totalBarangKembali);
+            // Total barang masuk (belanja) should count only manual restock entries
+            $totalBarangMasuk = (int) $barangMasukData->where('sumber', 'manual')->sum('jumlah');
+
+            // Saldo berjalan dihitung dari stok masuk manual dikurangi terpakai secara kronologis.
+            $stokBerjalan += $totalBarangMasuk - $totalBarangTerpakai;
+            $saldoHarian = $stokBerjalan;
+            $stokRealSaatIni = $stokBerjalan;
 
             return [
                 'tanggal' => Carbon::parse($tanggal)->format('d M Y'),
@@ -199,11 +240,65 @@ class LaporanController extends Controller
                 'total_barang_terpakai' => $totalBarangTerpakai,
                 'total_barang_masuk' => $totalBarangMasuk,
                 'stok_real_saat_ini' => $stokRealSaatIni,
-                'saldo_harian' => $totalBarangMasuk + $totalBarangKembali - $totalBarangTerpakai,
+                'saldo_harian' => $saldoHarian,
                 'detail_cabang' => $detailCabang ?: '-',
                 'detail_barang' => $detailBarang,
+                'cabang_headers' => $cabangHeaders,
             ];
         })->values();
+    }
+
+    /**
+     * Build the cabang header list used by report PDF so columns stay consistent.
+     */
+    private function buildCabangHeaders(?Collection $dailyRecords = null): array
+    {
+        $preferredOrder = [
+            'Cab 1 pawarengan',
+            'Cab 2 regency',
+            'Cab 3 Angkringan sukaseri',
+            'Cab 4 Angkringan pawarengan',
+            'Cab 5 Stand HK Kamojing',
+            'Cab 6 Cikopak purwakarta',
+            'Cab 7 Munjul purwakarta',
+            'Cab 8 Telor gulung niceso senopati',
+            'Cab 9 O!save sukaseri',
+            'Cab 10 Maracang purwakarta',
+        ];
+
+        $cabangs = $dailyRecords
+            ? $dailyRecords->map(fn (CabangDistribusi $record) => $record->cabang)->filter()
+            : Cabang::where('aktif', true)->get();
+
+        $orderedCabangs = collect($preferredOrder)->map(function (string $preferredName) use ($cabangs) {
+            $found = $cabangs->first(function (Cabang $cabang) use ($preferredName) {
+                return strcasecmp(trim($cabang->nama_cabang), trim($preferredName)) === 0;
+            });
+
+            return $found;
+        })->filter();
+
+        $otherCabangs = $cabangs->reject(function (Cabang $cabang) use ($preferredOrder) {
+            foreach ($preferredOrder as $preferredName) {
+                if (strcasecmp(trim($cabang->nama_cabang), trim($preferredName)) === 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        })->values();
+
+        return $orderedCabangs
+            ->concat($otherCabangs)
+            ->values()
+            ->map(function (Cabang $cabang) {
+                return [
+                    'cabang_id' => $cabang->id,
+                    'kode_cabang' => $cabang->kode_cabang ?: '-',
+                    'nama_cabang' => $cabang->nama_cabang ?: '-',
+                ];
+            })
+            ->all();
     }
 
     /**

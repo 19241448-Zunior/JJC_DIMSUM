@@ -19,6 +19,7 @@ class BarangMasuk extends Model
         'cabang_id',
         'lokasi_id',
         'jumlah',
+        'sumber',
         'tanggal_masuk',
         'void_status',
         'void_reason',
@@ -69,6 +70,27 @@ class BarangMasuk extends Model
     public function lokasi(): BelongsTo
     {
         return $this->belongsTo(LokasiPenyimpanan::class, 'lokasi_id');
+    }
+
+    /**
+     * Helper: check if this masuk is Restock Manual
+     */
+    public function isRestockManual(): bool
+    {
+        return strtolower((string) $this->sumber) === 'manual';
+    }
+
+    /**
+     * Human readable label for sumber
+     */
+    public function sumberLabel(): string
+    {
+        $s = strtolower((string) $this->sumber);
+        return match ($s) {
+            'manual' => 'Restock Manual',
+            'sisa_cabang' => 'Sisa Cabang',
+            default => $this->sumber ?? '-',
+        };
     }
 
     /**

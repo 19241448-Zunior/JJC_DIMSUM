@@ -100,6 +100,43 @@ class Barang extends Model
     }
 
     /**
+     * Hitung stok aktual dari jejak transaksi masuk/keluar.
+     *
+     * Stok yang tersimpan di kolom `stok` bisa tertinggal ketika ada alur
+     * transaksi cabang, jadi saldo yang ditampilkan dihitung ulang dari ledger.
+     */
+    public function getStokAttribute($value): int
+    {
+        return $this->getSaldoStokTransaksi();
+    }
+
+    /**
+     * Status stok selalu mengikuti saldo aktual, bukan nilai snapshot lama.
+     */
+    public function getStatusAttribute($value): string
+    {
+        $stokMin = (int) ($this->stok_min ?? 5);
+
+        return $this->getSaldoStokTransaksi() >= $stokMin ? 'normal' : 'low';
+    }
+
+    /**
+     * Saldo stok dari transaksi valid yang masih aktif.
+     */
+    public function getSaldoStokTransaksi(): int
+    {
+        $totalMasuk = (int) $this->barangMasuk()
+            ->whereNull('deleted_at')
+            ->sum('jumlah');
+
+        $totalKeluar = (int) $this->barangKeluar()
+            ->whereNull('deleted_at')
+            ->sum('jumlah');
+
+        return max(0, $totalMasuk - $totalKeluar);
+    }
+
+    /**
      * Scope untuk mendapatkan barang dengan stok rendah (≤ 20)
      */
     public function scopeLowStock($query, $threshold = 20)

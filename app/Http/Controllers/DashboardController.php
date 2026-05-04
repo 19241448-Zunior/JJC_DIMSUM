@@ -17,7 +17,7 @@ class DashboardController extends Controller
         $totalBarang = Barang::count();
         $totalMasuk = BarangMasuk::sum('jumlah');
         $totalKeluar = BarangKeluar::sum('jumlah');
-        $totalStok = Barang::sum('stok');
+        $totalStok = $this->getTotalStokAktual();
 
         // Get data for chart (last 7 days)
         $chartData = $this->getChartData();
@@ -74,7 +74,7 @@ class DashboardController extends Controller
         $totalBarang = Barang::count();
         $totalMasuk = BarangMasuk::sum('jumlah');
         $totalKeluar = BarangKeluar::sum('jumlah');
-        $totalStok = Barang::sum('stok');
+        $totalStok = $this->getTotalStokAktual();
         $chartData = $this->getChartData();
         $recentActivities = $this->getRecentActivities();
         $lowStockItems = Barang::getLowStockNotifications();
@@ -91,6 +91,11 @@ class DashboardController extends Controller
             'results',
             'matchedCount'
         ));
+    }
+
+    private function getTotalStokAktual(): int
+    {
+        return (int) Barang::query()->get()->sum('stok');
     }
 
     private function getPerCabangBreakdown(int $barangId)
